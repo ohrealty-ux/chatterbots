@@ -427,7 +427,7 @@ function loadTex(url){ if(_avTexCache.has(url)) return _avTexCache.get(url); con
 function hashStr(s){ let h=0; for(let i=0;i<(s||'').length;i++) h=(h*31+s.charCodeAt(i))|0; return Math.abs(h); }
 
 function buildWorld(){
-  buildSky(); buildMountains(); buildTerrain(); buildWater(); buildGrass(); buildFlowers(); buildTrees(); buildLife(); buildCommons();
+  buildSky(); buildMountains(); buildTerrain(); buildWater(); buildGrass(); buildFlowers(); buildTrees(); buildLife(); buildCommons(); buildDock();
   updateTOD(dayPhase);
 }
 

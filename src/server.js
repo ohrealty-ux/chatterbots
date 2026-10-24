@@ -48,13 +48,19 @@ function deepMerge(base, over) {
   }
   return base;
 }
+// BRAND_NEUTRAL=1 forces a pure open-metaverse deployment: the brokerage overlay, storefront
+// and brand assets are ignored even if present on disk, so the public site is 100% neutral.
+const NEUTRAL = process.env.BRAND_NEUTRAL === '1';
 const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'world.config.json'), 'utf8'));
 const OVERLAY = path.join(ROOT, 'config', 'brokerage.json');
-if (fs.existsSync(OVERLAY)) {
+if (NEUTRAL) {
+  log('[config] BRAND_NEUTRAL=1 — open-metaverse mode: brokerage overlay/storefront/brand disabled.');
+} else if (fs.existsSync(OVERLAY)) {
   try { deepMerge(config, JSON.parse(fs.readFileSync(OVERLAY, 'utf8'))); log('[config] brokerage overlay applied'); }
   catch (e) { log('[config] brokerage overlay failed to parse, ignoring:', e.message); }
 }
-const HAS_STOREFRONT = fs.existsSync(path.join(PUBLIC, 'storefront', 'index.html'));
+const HAS_STOREFRONT = !NEUTRAL && fs.existsSync(path.join(PUBLIC, 'storefront', 'index.html'));
+const SERVE_BRAND = !NEUTRAL && fs.existsSync(path.join(PUBLIC, 'brand'));
 
 // Admin password
 let ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -265,7 +271,7 @@ app.post('/admin/api/mute', requireAdmin, jsonParser, (req, res) => {
 app.use('/vendor', express.static(path.join(PUBLIC, 'vendor'), { maxAge: '1d' }));
 app.use('/client', express.static(path.join(PUBLIC, 'client'), { maxAge: 0, setHeaders: r => r.setHeader('Cache-Control', 'max-age=0, s-maxage=60') }));
 app.use('/admin', express.static(path.join(PUBLIC, 'admin'), { maxAge: 0, setHeaders: r => r.setHeader('Cache-Control', 'max-age=0, s-maxage=60') }));
-if (fs.existsSync(path.join(PUBLIC, 'brand'))) app.use('/brand', express.static(path.join(PUBLIC, 'brand'), { maxAge: '1h' }));
+if (SERVE_BRAND) app.use('/brand', express.static(path.join(PUBLIC, 'brand'), { maxAge: '1h' }));
 if (HAS_STOREFRONT) app.use(express.static(path.join(PUBLIC, 'storefront'), { maxAge: 0, setHeaders: r => r.setHeader('Cache-Control', 'max-age=0, s-maxage=60') }));
 app.get('/world', (_req, res) => res.sendFile(path.join(PUBLIC, 'client', 'index.html')));
 app.get('/admin', (_req, res) => res.sendFile(path.join(PUBLIC, 'admin', 'admin.html')));
