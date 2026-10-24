@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Browse Lots — IvyRealty.Ai Marketplace</title>
+<meta name="description" content="Browse Lake Elon waterfront, countryside meadow, and downtown lots by tier, availability, acreage and price. Prices display-only; deeds coming soon." />
+<link rel="icon" href="/brand/crypto-doge-v2.webp" />
+<link rel="stylesheet" href="/store.css" />
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a href="/"><img class="wordmark" src="/brand/ivy-realty-wordmark-white.png" alt="IvyRealty.Ai" /></a>
+    <button class="burger" aria-label="Menu">☰</button>
+    <nav class="links">
+      <a href="/lots.html">Browse Lots</a>
+      <a href="/#metaverse">Metaverse</a>
+      <a href="/#irl">IRL Brokerage</a>
+      <a href="/world" class="btn btn-gold enter">Enter the Metaverse</a>
+    </nav>
+  </div>
+</header>
+
+<section class="wrap">
+  <span class="pill-tag">Marketplace · display-only prices</span>
+  <h2>Lots on Lake Elon</h2>
+  <p class="lead">Waterfront, countryside and downtown parcels. “Buy” joins the waitlist — on-chain deeds and Dogecoin checkout are a later release. No wallet is connected.</p>
+
+  <div class="tiers" id="tiers" style="margin-bottom:10px"></div>
+
+  <div class="filters">
+    <select id="f-tier"><option value="">All tiers</option>
+      <option value="waterfront">Lake Elon Waterfront</option>
+      <option value="countryside">Countryside / Meadow</option>
+      <option value="downtown">Inner-City / Downtown</option>
+    </select>
+    <select id="f-avail"><option value="">All lots</option><option value="avail">Available only</option></select>
+    <select id="f-sort"><option value="">Sort</option><option value="price">Price (low→high)</option><option value="acre">Acreage (high→low)</option></select>
+  </div>
+
+  <div class="lotgrid" id="lotgrid"></div>
+</section>
+
+<div class="compliance">
+  <div class="wrap">
+    <img src="/brand/fair-housing-logo.png" alt="Equal Housing Opportunity" />
+    <p><strong>Equal Housing Opportunity.</strong> All lots are offered without regard to race, color, religion, sex, handicap, familial status, or national origin. Prices are display-only estimates; nothing on this page is an offer to sell securities or real property, and no funds are collected.</p>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div><img class="wordmark" src="/brand/ivy-realty-wordmark-white.png" alt="IvyRealty.Ai" style="height:26px" /></div>
+    <div>© <span id="yr"></span> IvyRealty.Ai · Prices display-only · No wallet connected</div>
+  </div>
+</footer>
+
+<script type="module" src="/page-lots.js"></script>
+</body>
+</html>

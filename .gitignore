@@ -1,0 +1,26 @@
+# secrets
+.env
+.env.*
+!.env.example
+# deps
+node_modules/
+# runtime data / persistence
+data/*.db
+data/*.db-*
+data/*.sqlite
+data/transcripts/
+*.log
+# OS
+.DS_Store
+Thumbs.db
+# large binaries / future assets
+*.glb.bak
+*.zip
+# FUTURE WALLET MODULE — must never be committed in this repo phase
+wallet/
+deeds/
+payments/
+chain/
+*.wallet
+*.keystore
+secrets.*

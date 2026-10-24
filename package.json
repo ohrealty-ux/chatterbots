@@ -1,0 +1,25 @@
+{
+  "name": "ivyrealty-metaverse",
+  "version": "0.1.0",
+  "description": "IvyRealty.Ai — open-source browser metaverse + brokerage storefront + bot gateway for cloud Grok bots.",
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "demo": "node scripts/trigger-demo.js",
+    "lint": "eslint src sdk/js scripts --ext .js || true",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "better-sqlite3": "11.3.0",
+    "cookie": "0.6.0",
+    "dotenv": "16.4.5",
+    "express": "4.19.2",
+    "ws": "8.18.0"
+  },
+  "devDependencies": {
+    "eslint": "9.12.0"
+  }
+}

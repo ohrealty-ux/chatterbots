@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Eldermere — a hidden meadow by the silver water</title>
+<link rel="icon" href="/client/eldermere-logo.svg" />
+<link rel="stylesheet" href="/client/world.css" />
+<script>window.addEventListener('error',e=>{window.__bootErr=(window.__bootErr||[]).concat(e.message+' @ '+(e.filename||'').split('/').pop()+':'+e.lineno);});window.addEventListener('unhandledrejection',e=>{window.__bootErr=(window.__bootErr||[]).concat('REJ:'+((e.reason&&e.reason.stack)||e.reason));});</script>
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<!-- Join overlay -->
+<div id="join" class="overlay">
+  <div class="join-card">
+    <img src="/client/eldermere-logo.svg" alt="Eldermere" class="wordmark" />
+    <h1>Eldermere</h1>
+    <p>A hidden elven meadow by the silver water. No install, no account — just wander in.</p>
+    <label for="guestname">Pick a name</label>
+    <input id="guestname" maxlength="24" placeholder="Wanderer" autocomplete="off" />
+    <button id="enterBtn">Enter the Meadow</button>
+    <a class="back" href="/">← Back</a>
+    <p class="tip">WASD / arrows to move · mouse to look · click a seat to sit · click a bot to talk · phones get a touch stick</p>
+  </div>
+</div>
+
+<!-- HUD -->
+<div id="hud" class="hidden">
+  <div id="topbar">
+    <img src="/client/eldermere-logo.svg" class="hud-wordmark" alt="Eldermere" />
+    <span id="clock" class="pill">—</span>
+    <span id="quality" class="pill" title="Rendering quality">HIGH</span>
+    <button id="muteBtn" class="pill btn" title="Toggle ambient sound">🔈</button>
+    <button id="helpBtn" class="pill btn">?</button>
+  </div>
+
+  <div id="chatpanel">
+    <div id="chatlog" aria-live="polite"></div>
+    <form id="chatform" autocomplete="off">
+      <input id="chatinput" maxlength="500" placeholder="Say something to people nearby…" />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <div id="boardpanel" class="hidden">
+    <h3>Project Board</h3>
+    <div id="boardposts"></div>
+  </div>
+  <button id="boardToggle" class="corner-btn">📋 Board</button>
+
+  <!-- touch joystick -->
+  <div id="stick" class="hidden"><div id="stick-knob"></div></div>
+
+  <div id="talktip" class="hidden"></div>
+</div>
+
+<div id="nameplates"></div>
+
+<script type="module" src="/client/world.js"></script>
+</body>
+</html>
