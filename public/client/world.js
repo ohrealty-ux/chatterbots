@@ -36,7 +36,7 @@ const remote=new Map();      // id -> {mesh, data, bubbleEl, lastText, plateEl}
 const player={ pos:new THREE.Vector3(10,0,58), yaw:Math.PI, pitch:0, vel:new THREE.Vector3(), seated:false };
 let quality='high', lowFps=0, frameAvg=16;
 const keys={};
-let grassMesh,grassCount=0,flowerMesh,treeGroups=[],reedMesh,lilyMesh,waterMesh,birdMesh,butterflyMesh,fishMesh,fireflyMesh,animalMeshes=[],mountains=[];
+let grassMesh,grassCount=0,flowerMesh,treeGroups=[],reedMesh,lilyMesh,waterMesh,birdMesh,butterflyMesh,dragonflyMesh,fishMesh,fireflyMesh,animalMeshes=[],mountains=[];
 let audioCtx=null, muted=false, audioStarted=false, audioNodes={};
 const tmpV=new THREE.Vector3(), tmpV2=new THREE.Vector3();
 const clockDiv=document.getElementById('clock'), qualityDiv=document.getElementById('quality');
@@ -180,10 +180,11 @@ function buildGrass(){
 }
 function buildFlowers(){
   const want=quality==='low'?1200:CFG.densities.wildflowerInstances;
-  const g=new THREE.PlaneGeometry(0.3,0.3); g.translate(0,0.3,0);
-  const colors=['#e86a8f','#f0c04a','#8f6ad0','#ef7f4a'];
+  const g=new THREE.PlaneGeometry(0.34,0.34); g.translate(0,0.32,0);
+  // Palette weighted toward pink / purple / blue (one warm accent for contrast).
+  const colors=['#ec5f9c','#e0579b','#d94fa0','#a06ce0','#8456d8','#6a5ad6','#5a86e0','#4f9be8','#7fc0ef','#f0c04a'];
   flowerMesh=[]; const per=Math.floor(want/colors.length);
-  colors.forEach(col=>{ const im=new THREE.InstancedMesh(g,new THREE.MeshStandardMaterial({color:col,side:THREE.DoubleSide,roughness:1,transparent:true}),per);
+  colors.forEach(col=>{ const im=new THREE.InstancedMesh(g,new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.22,side:THREE.DoubleSide,roughness:1,transparent:true}),per);
     const d=new THREE.Object3D(); let n=0;
     for(let i=0;i<per;i++){ const cx=10+(noise2(i*0.3,i*0.7)-0.5)*260, cz=48+(noise2(i*0.5,i*0.2)-0.5)*260;
       const clump=noise2(cx*0.05,cz*0.05); if(clump<0.5) continue; const x=cx+(RND()-0.5)*8,z=cz+(RND()-0.5)*8;
@@ -237,6 +238,12 @@ function buildWater(){
       void main(){ float r1=sin(vU.x*0.3+time*1.1)+cos(vU.y*0.28-time*0.9); float r2=sin((vU.x+vU.y)*0.18+time*0.7);
         float rip=(r1*0.5+r2)*0.04; vec3 col=mix(shallow,deep,smoothstep(0.2,1.0,vR)); col+=sky*(0.18+rip);
         float foam=smoothstep(0.93,1.0,vR)*(0.6+0.4*sin(vU.x*2.0+time*3.0)); col=mix(col,vec3(0.95),foam*0.7);
+        // ── always-on sun sparkles: sharp twinkling specular glints dancing on the surface ──
+        float s1=pow(max(0.0,sin(vU.x*3.1+time*2.0)*cos(vU.y*2.7-time*1.7)),42.0);
+        float s2=pow(max(0.0,sin(vU.x*1.7-time*1.3)*cos(vU.y*2.1+time*1.1)),64.0);
+        float s3=pow(max(0.0,sin((vU.x-vU.y)*4.3+time*2.6)),80.0);
+        float sparkle=(s1+s2*1.3+s3*0.9)*(1.0-smoothstep(0.85,1.0,vR));
+        col+=vec3(1.0,0.96,0.82)*sparkle*1.6;
         gl_FragColor=vec4(col,0.86);}` });
   waterMesh=new THREE.Mesh(geo,waterMat); waterMesh.position.set(LAKE.center[0],-0.3,LAKE.center[2]); scene.add(waterMesh);
   // reeds + lily pads
@@ -254,18 +261,34 @@ function buildWater(){
 }
 
 // ───────── cheap life ─────────
-const life={birds:[],butterflies:[],fish:[],fireflies:[],animals:[]};
+const life={birds:[],butterflies:[],dragonflies:[],fish:[],fireflies:[],animals:[],waterfowl:[]};
 function buildLife(){
   // birds (flocking-ish instanced cones)
   const bg=new THREE.ConeGeometry(0.3,1.2,4); bg.rotateX(Math.PI/2);
   birdMesh=new THREE.InstancedMesh(bg,new THREE.MeshStandardMaterial({color:'#2a2a2a'}),CFG.densities.birds);
   for(let i=0;i<CFG.densities.birds;i++) life.birds.push({a:RND()*6.283,r:60+RND()*220,y:60+RND()*60,sp:0.2+RND()*0.4});
   scene.add(birdMesh);
-  // butterflies
-  const btg=new THREE.PlaneGeometry(0.4,0.3);
-  butterflyMesh=new THREE.InstancedMesh(btg,new THREE.MeshStandardMaterial({color:'#f0a84a',side:THREE.DoubleSide,transparent:true}),CFG.densities.butterflies);
-  for(let i=0;i<CFG.densities.butterflies;i++) life.butterflies.push({x:10+(RND()-0.5)*200,z:48+(RND()-0.5)*200,ph:RND()*6});
+  // butterflies — lush, bright, per-instance colour, gentle glow
+  const btPal=['#ff4fa3','#39d3ff','#ffd21f','#b45cff','#ff8a2b','#8aff5a','#ff5a4f','#4fffd0','#ff6fe0','#7cc0ff'];
+  const btg=new THREE.PlaneGeometry(0.5,0.38);
+  butterflyMesh=new THREE.InstancedMesh(btg,new THREE.MeshStandardMaterial({side:THREE.DoubleSide,transparent:true,emissive:'#ffffff',emissiveIntensity:0.18,roughness:0.5}),CFG.densities.butterflies);
+  const _bc=new THREE.Color();
+  for(let i=0;i<CFG.densities.butterflies;i++){ life.butterflies.push({x:10+(RND()-0.5)*220,z:48+(RND()-0.5)*220,ph:RND()*6,sc:0.8+RND()*0.8}); butterflyMesh.setColorAt(i,_bc.set(btPal[i%btPal.length])); }
+  if(butterflyMesh.instanceColor) butterflyMesh.instanceColor.needsUpdate=true;
   scene.add(butterflyMesh);
+  // dragonflies — slender iridescent bodies with shimmering wings, hover over water & reeds
+  const dfPal=['#35e0c8','#49b0ff','#7cf05a','#ffcf3a','#ff7ad0'];
+  const dfg=new THREE.PlaneGeometry(0.9,0.42);
+  dragonflyMesh=new THREE.InstancedMesh(dfg,new THREE.MeshStandardMaterial({side:THREE.DoubleSide,transparent:true,opacity:0.92,emissive:'#bfffe8',emissiveIntensity:0.3,metalness:0.4,roughness:0.3}),CFG.densities.dragonflies);
+  for(let i=0;i<CFG.densities.dragonflies;i++){
+    const nearWater=RND()<0.7; let x,z;
+    if(nearWater){ const a=RND()*6.283, r=(LAKE.radius-2)-RND()*20; x=LAKE.center[0]+Math.cos(a)*r; z=LAKE.center[2]+Math.sin(a)*r; }
+    else { x=10+(RND()-0.5)*180; z=48+(RND()-0.5)*180; }
+    life.dragonflies.push({bx:x,bz:z,ph:RND()*6,sp:0.7+RND()*0.9,rad:1.5+RND()*3});
+    dragonflyMesh.setColorAt(i,_bc.set(dfPal[i%dfPal.length]));
+  }
+  if(dragonflyMesh.instanceColor) dragonflyMesh.instanceColor.needsUpdate=true;
+  scene.add(dragonflyMesh);
   // fish (in lake, under surface)
   const fg=new THREE.ConeGeometry(0.2,0.8,4); fg.rotateX(Math.PI/2);
   fishMesh=new THREE.InstancedMesh(fg,new THREE.MeshStandardMaterial({color:'#8899aa'}),CFG.densities.fish);
@@ -282,6 +305,34 @@ function buildLife(){
     const head=new THREE.Mesh(new THREE.SphereGeometry(0.3,8,8),body.material); head.position.set(0.8,1.4,0); g.add(head);
     g.position.set(10+(RND()-0.5)*160,0,48+(RND()-0.5)*160); scene.add(g);
     life.animals.push({g,tx:g.position.x,tz:g.position.z,t:0}); }
+  buildWaterfowl();
+}
+// ───────── ducks & geese: procedural waterfowl drifting on the lake ─────────
+function buildWaterfowl(){
+  const WL=-0.3; // water surface y
+  const n=CFG.densities.waterfowl||0;
+  for(let i=0;i<n;i++){
+    const goose=RND()<0.4; const g=new THREE.Group();
+    const bodyCol = goose ? (RND()<0.5?'#c9c7bf':'#8d8a80') : (i%3===0?'#3a6f4a':'#7a5a38');
+    const bodyMat=new THREE.MeshStandardMaterial({color:bodyCol,roughness:0.85});
+    const neckMat=new THREE.MeshStandardMaterial({color:goose?'#2b2b2b':(i%3===0?'#15502f':'#5a4228'),roughness:0.8});
+    const scl=goose?1.35:0.95;
+    // body (ellipsoid) sitting low in the water
+    const body=new THREE.Mesh(new THREE.SphereGeometry(0.6,12,10),bodyMat); body.scale.set(1.5,0.8,0.9); body.position.set(0,WL+0.28*scl,0); body.castShadow=true; g.add(body);
+    // tail tip
+    const tail=new THREE.Mesh(new THREE.ConeGeometry(0.22,0.6,6),bodyMat); tail.rotation.z=Math.PI/2; tail.position.set(-0.95*1.0,WL+0.42*scl,0); g.add(tail);
+    // neck (curved — two segments) + head + bill, facing +X
+    const neck=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.17,goose?1.0:0.55,8),neckMat); neck.position.set(0.7,WL+(goose?0.78:0.58)*scl,0); neck.rotation.z=-0.5; g.add(neck);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(goose?0.2:0.22,12,10),neckMat); head.position.set(goose?1.05:0.92,WL+(goose?1.18:0.82)*scl,0); g.add(head);
+    const billCol = goose ? '#1c1c1c' : (i%3===0?'#2d2d2d':'#e8a23a');
+    const bill=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.3,6),new THREE.MeshStandardMaterial({color:billCol,roughness:0.6})); bill.rotation.z=-Math.PI/2; bill.position.set((goose?1.28:1.16),WL+(goose?1.14:0.78)*scl,0); g.add(bill);
+    g.scale.setScalar(scl);
+    // place within lake, away from the very centre & edges
+    const a=RND()*6.283, r=12+RND()*(LAKE.radius-28);
+    g.position.set(LAKE.center[0]+Math.cos(a)*r, 0, LAKE.center[2]+Math.sin(a)*r);
+    g.rotation.y=RND()*6.283; scene.add(g);
+    life.waterfowl.push({g,a:RND()*6.283,r,sp:0.05+RND()*0.09,ph:RND()*6,wob:0.4+RND()*0.6});
+  }
 }
 
 // ───────── mountains / horizon silhouettes ─────────
@@ -321,6 +372,35 @@ function buildCommons(){
   const frame=new THREE.Mesh(new THREE.BoxGeometry(3.2,2.2,0.1),new THREE.MeshStandardMaterial({color:CFG.palette.gold})); frame.position.set(bx,bh+2,bz-0.02); frame.rotation.y=C.whiteboard.facing; scene.add(frame);
   // flagship HQ marker on far shore
   const hq=new THREE.Mesh(new THREE.BoxGeometry(10,8,8),new THREE.MeshStandardMaterial({color:'#2a2f3a'})); const hx=-120,hz=-120; hq.position.set(hx,terrainHeight(hx,hz)+4,hz); hq.castShadow=true; scene.add(hq);
+}
+// ───────── wooden meeting dock: lies over the water by the picnic bench ─────────
+function buildDock(){
+  const wood=new THREE.MeshStandardMaterial({color:'#9a7342',roughness:0.85});
+  const woodDark=new THREE.MeshStandardMaterial({color:'#7d5a30',roughness:0.9});
+  const anchor=[8,38.6];                      // just inland of the picnic bench
+  const cx=LAKE.center[0], cz=LAKE.center[2];
+  let dx=cx-anchor[0], dz=cz-anchor[1]; const dl=Math.hypot(dx,dz); dx/=dl; dz/=dl;   // toward water
+  const px=-dz, pz=dx;                          // perpendicular (deck width axis)
+  const yaw=Math.atan2(-dz,dx);                // align box local +X with (dx,dz)
+  const LEN=17, WID=2.8, DECK_Y=0.5;
+  const mid=[anchor[0]+dx*(LEN/2), anchor[1]+dz*(LEN/2)];
+  // main deck slab
+  const deck=new THREE.Mesh(new THREE.BoxGeometry(LEN,0.16,WID),wood); deck.position.set(mid[0],DECK_Y,mid[1]); deck.rotation.y=yaw; deck.receiveShadow=true; deck.castShadow=true; scene.add(deck);
+  // cross-planks for texture (alternating tone)
+  const planks=Math.floor(LEN/0.6);
+  for(let i=0;i<planks;i++){ const d=(i+0.5)*0.6 - 0.1; const bx=anchor[0]+dx*d, bz=anchor[1]+dz*d;
+    const pl=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.05,WID-0.08), i%2?woodDark:wood); pl.position.set(bx,DECK_Y+0.11,bz); pl.rotation.y=yaw; scene.add(pl); }
+  // pilings into the water + railing posts above
+  for(let i=0;i<=4;i++){ const d=i/4*LEN; for(const side of [-1,1]){
+    const bx=anchor[0]+dx*d+px*(WID/2-0.2)*side, bz=anchor[1]+dz*d+pz*(WID/2-0.2)*side;
+    const pile=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.18,3.4,8),woodDark); pile.position.set(bx,-1.05,bz); pile.castShadow=true; scene.add(pile);
+    if(i>0){ const post=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.95,6),wood); post.position.set(bx,DECK_Y+0.5,bz); scene.add(post); } } }
+  // top rails along both sides
+  for(const side of [-1,1]){ const sx=anchor[0]+px*(WID/2-0.2)*side, sz=anchor[1]+pz*(WID/2-0.2)*side;
+    const rail=new THREE.Mesh(new THREE.BoxGeometry(LEN-1,0.1,0.1),wood); rail.position.set(sx+dx*(LEN/2), DECK_Y+0.95, sz+dz*(LEN/2)); rail.rotation.y=yaw; scene.add(rail); }
+  // a shade tree beside the dock root
+  const tb=anchor[0]+px*3.4, tbz=anchor[1]+pz*3.4;
+  if(terrainHeight(tb,tbz)>0.1){ const tg=treeMesh(1); tg.position.set(tb,terrainHeight(tb,tbz),tbz); tg.scale.setScalar(1.25); scene.add(tg); }
 }
 function addSeatMarker(id,pos){ const m=new THREE.Mesh(new THREE.RingGeometry(0.4,0.55,16),new THREE.MeshBasicMaterial({color:CFG.palette.gold,transparent:true,opacity:0.5,side:THREE.DoubleSide}));
   m.rotation.x=-Math.PI/2; m.position.set(pos[0],pos[1]-0.4,pos[2]); m.userData.seatId=id; scene.add(m); seatMarkers.set(id,{pos,mesh:m}); }
@@ -530,12 +610,20 @@ function movePlayer(dt){ let f=0,s=0;
 function updateLife(t,dt){ const o=new THREE.Object3D();
   life.birds.forEach((b,i)=>{ b.a+=b.sp*dt*0.3; const x=10+Math.cos(b.a)*b.r,z=48+Math.sin(b.a)*b.r,y=b.y+Math.sin(t+i)*4;
     o.position.set(x,y,z); o.rotation.y=-b.a; o.scale.setScalar(1+Math.sin(t*6+i)*0.2); o.updateMatrix(); birdMesh.setMatrixAt(i,o.matrix);}); birdMesh.instanceMatrix.needsUpdate=true;
-  life.butterflies.forEach((b,i)=>{ b.ph+=dt; const x=b.x+Math.sin(b.ph*1.3)*3,z=b.z+Math.cos(b.ph)*3,y=terrainHeight(x,z)+1+Math.sin(b.ph*3)*0.5;
-    o.position.set(x,y,z); o.rotation.set(0,b.ph,Math.sin(t*20+i)*0.6); o.scale.setScalar(1); o.updateMatrix(); butterflyMesh.setMatrixAt(i,o.matrix);}); butterflyMesh.instanceMatrix.needsUpdate=true;
+  life.butterflies.forEach((b,i)=>{ b.ph+=dt; const x=b.x+Math.sin(b.ph*1.3)*3.4,z=b.z+Math.cos(b.ph)*3.4,y=terrainHeight(x,z)+1.1+Math.sin(b.ph*3)*0.6;
+    o.position.set(x,y,z); o.rotation.set(0,b.ph,Math.sin(t*22+i)*0.7); o.scale.setScalar(b.sc||1); o.updateMatrix(); butterflyMesh.setMatrixAt(i,o.matrix);}); butterflyMesh.instanceMatrix.needsUpdate=true;
+  if(dragonflyMesh){ life.dragonflies.forEach((b,i)=>{ b.ph+=dt*b.sp; const x=b.bx+Math.sin(b.ph)*b.rad,z=b.bz+Math.cos(b.ph*0.8)*b.rad,y=0.9+Math.sin(b.ph*2.3)*0.6;
+    o.position.set(x,y,z); o.rotation.set(0,b.ph+Math.PI/2,Math.sin(t*34+i)*0.35); o.scale.setScalar(1); o.updateMatrix(); dragonflyMesh.setMatrixAt(i,o.matrix);}); dragonflyMesh.instanceMatrix.needsUpdate=true; }
   life.fish.forEach((b,i)=>{ b.a+=b.sp*dt*0.2; const x=LAKE.center[0]+Math.cos(b.a)*b.r,z=LAKE.center[2]+Math.sin(b.a)*b.r;
     o.position.set(x,-0.8,z); o.rotation.y=-b.a; o.scale.setScalar(1); o.updateMatrix(); fishMesh.setMatrixAt(i,o.matrix);}); fishMesh.instanceMatrix.needsUpdate=true;
   life.animals.forEach(a=>{ a.t-=dt; if(a.t<=0){ a.t=3+Math.random()*5; a.tx=10+(Math.random()-0.5)*160; a.tz=48+(Math.random()-0.5)*160; }
     const dx=a.tx-a.g.position.x,dz=a.tz-a.g.position.z,d=Math.hypot(dx,dz); if(d>0.5){ a.g.position.x+=dx/d*dt*2; a.g.position.z+=dz/d*dt*2; a.g.rotation.y=Math.atan2(dx,dz);} a.g.position.y=terrainHeight(a.g.position.x,a.g.position.z); });
+  // ducks & geese drifting on the lake, bobbing gently in the ripples
+  life.waterfowl.forEach(w=>{ w.a+=w.sp*dt*0.12; w.ph+=dt;
+    const x=LAKE.center[0]+Math.cos(w.a)*w.r, z=LAKE.center[2]+Math.sin(w.a)*w.r;
+    w.g.position.set(x, -0.08+Math.sin(w.ph*w.wob)*0.05, z);
+    w.g.rotation.y=-w.a+Math.PI/2 + Math.sin(w.ph*0.5)*0.15;
+    w.g.rotation.z=Math.sin(w.ph*0.8)*0.05; });
   // firefly flicker
   if(fireflyMesh){ const pos=fireflyMesh.geometry.attributes.position; life.fireflies.forEach((f,i)=>{ f.ph+=dt; pos.setX(i,f.bx+Math.sin(f.ph)*1.5); pos.setZ(i,f.bz+Math.cos(f.ph*0.7)*1.5); pos.setY(i,1.2+Math.sin(f.ph*2)*0.8);}); pos.needsUpdate=true; }
 }

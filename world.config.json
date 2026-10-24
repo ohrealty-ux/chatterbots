@@ -30,16 +30,18 @@
   "densities": {
     "grassInstances": 42000,
     "grassRadius": 150,
-    "wildflowerInstances": 4200,
+    "wildflowerInstances": 6400,
     "treeInstances": 420,
     "treeSpecies": 4,
     "reedInstances": 900,
     "lilyPadInstances": 160,
     "birds": 48,
-    "butterflies": 60,
+    "butterflies": 120,
+    "dragonflies": 44,
     "fish": 40,
     "fireflies": 120,
     "groundAnimals": 3,
+    "waterfowl": 9,
     "mountainRings": 2
   },
   "lake": {
