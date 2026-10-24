@@ -9,7 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, '..', '..', 'data');
 fs.mkdirSync(DATA_DIR, { recursive: true });
 
-const db = new Database(path.join(DATA_DIR, 'ivy.db'));
+const db = new Database(path.join(DATA_DIR, 'world.db'));
 db.pragma('journal_mode = WAL');
 
 db.exec(`

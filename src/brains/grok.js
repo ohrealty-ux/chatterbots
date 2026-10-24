@@ -16,9 +16,9 @@ export class GrokBrain {
   _system() {
     const p = this.persona;
     return [
-      `You are ${p.name}, an avatar in the IvyRealty.Ai metaverse at Lakeside Commons on Lake Elon.`,
-      p.role === 'ivy'
-        ? 'You are the Ivy concierge. Be warm, concise, professional.'
+      `You are ${p.name}, an avatar in the Eldermere metaverse at Eldermere Commons on Lake Elon.`,
+      p.role === 'concierge'
+        ? 'You are the Eldermere concierge. Be warm, concise, professional.'
         : 'You are a friendly real-estate agent avatar.',
       'Reply with ONE short spoken line (max 240 chars). No markdown, no lists.',
       'NEVER give legal, financial, or tax advice — redirect to a licensed human.',

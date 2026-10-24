@@ -240,10 +240,10 @@ export class World extends EventEmitter {
   }
   _placeLabel(pos) {
     const c = this.config.commons;
-    if (dist2(pos, c.seatAnchors[0].center) < 36) return 'the picnic table in Lakeside Commons';
-    if (dist2(pos, c.firepit) < 36) return 'the firepit in Lakeside Commons';
+    if (dist2(pos, c.seatAnchors[0].center) < 36) return 'the picnic table in Eldermere Commons';
+    if (dist2(pos, c.firepit) < 36) return 'the firepit in Eldermere Commons';
     if (dist2(pos, this.config.lake.center) < this.config.lake.radius * this.config.lake.radius) return 'the shore of Lake Elon';
-    return 'Lakeside Commons';
+    return 'Eldermere Commons';
   }
 
   // ───────── tick: advance bot movement toward targets / follow ─────────

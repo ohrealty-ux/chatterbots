@@ -33,10 +33,18 @@ const log = (...a) => console.log(new Date().toISOString(), ...a);
 // brokerage) on top WITHOUT shipping that content in the open-source tree.
 function deepMerge(base, over) {
   for (const k of Object.keys(over)) {
-    if (over[k] && typeof over[k] === 'object' && !Array.isArray(over[k]) &&
-        base[k] && typeof base[k] === 'object' && !Array.isArray(base[k])) {
-      deepMerge(base[k], over[k]);
-    } else { base[k] = over[k]; }
+    const o = over[k], b = base[k];
+    if (Array.isArray(o) && Array.isArray(b) && o.every(e => e && e.id) && b.every(e => e && e.id)) {
+      // Merge arrays of objects BY id: overlay entries patch matching base entries,
+      // unknown ids are appended, base entries without an overlay match are kept.
+      for (const oe of o) {
+        const be = b.find(e => e.id === oe.id);
+        if (be) deepMerge(be, oe); else b.push(oe);
+      }
+    } else if (o && typeof o === 'object' && !Array.isArray(o) &&
+               b && typeof b === 'object' && !Array.isArray(b)) {
+      deepMerge(b, o);
+    } else { base[k] = o; }
   }
   return base;
 }
@@ -74,7 +82,7 @@ const beacons = new BotBeacons({
   onBeacon: (data) => {
     // Map a beacon to world behavior: e.g. task done -> walk to board, glow, say a line.
     try {
-      const botId = data.bot || 'ivy';
+      const botId = data.bot || 'elowen';
       const bot = Bots.get(botId);
       if (!bot) return;
       gateway.handleAction(bot, 'join', {});
@@ -237,7 +245,7 @@ app.post('/admin/api/freeze', requireAdmin, jsonParser, (req, res) => {
 });
 app.post('/admin/api/demo', requireAdmin, async (_req, res) => {
   AuditLog.add('admin', 'trigger_demo', {});
-  demo.run(['ivy', 'marlo']).then(r => log('[demo] finished', r)).catch(e => log('[demo] error', e.message));
+  demo.run(['elowen', 'fenn']).then(r => log('[demo] finished', r)).catch(e => log('[demo] error', e.message));
   res.json({ ok: true, message: 'Demo started. Watch the world or read data/transcripts/.' });
 });
 app.post('/admin/api/lot/:id/assign', requireAdmin, jsonParser, (req, res) => {
@@ -337,6 +345,6 @@ server.listen(PORT, '127.0.0.1', () => {
 
 // auto-run demo shortly after boot so the picnic-bench proof exists without manual trigger
 const AUTO_DEMO = process.env.AUTO_DEMO !== '0';
-if (AUTO_DEMO) setTimeout(() => { demo.run(['ivy', 'marlo']).then(r => log('[demo:auto]', r)).catch(e => log('[demo:auto] error', e.message)); }, 2500);
+if (AUTO_DEMO) setTimeout(() => { demo.run(['elowen', 'fenn']).then(r => log('[demo:auto]', r)).catch(e => log('[demo:auto] error', e.message)); }, 2500);
 
 process.on('SIGTERM', () => { beacons.stop(); server.close(() => process.exit(0)); });

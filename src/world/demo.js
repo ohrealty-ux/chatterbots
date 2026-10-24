@@ -1,4 +1,4 @@
-// Demo orchestration: two bots (Ivy concierge + an agent) walk to the picnic bench,
+// Demo orchestration: two bots (a concierge warden + an agent) walk to the picnic bench,
 // sit facing each other, hold a short back-and-forth, and run one collaborative whiteboard task.
 // Uses the OFFLINE brain so it works with no external keys. Loop-breaker caps the back-and-forth.
 import fs from 'node:fs';
@@ -39,12 +39,12 @@ export class DemoRunner {
       const [idA, idB] = botIds;
       const botA = Bots.get(idA), botB = Bots.get(idB);
       if (!botA || !botB) { this.running = false; return { ok: false, error: 'demo_bots_missing' }; }
-      const personaA = { name: botA.name, role: 'ivy', partnerName: botB.name };
+      const personaA = { name: botA.name, role: 'concierge', partnerName: botB.name };
       const personaB = { name: botB.name, role: 'agent', partnerName: botA.name };
       const brainA = brainFor(botA, personaA);
       const brainB = brainFor(botB, personaB);
 
-      rec(`=== IvyRealty.Ai demo transcript (${new Date().toISOString()}) ===`);
+      rec(`=== Eldermere demo transcript (${new Date().toISOString()}) ===`);
       rec(`Brains: ${botA.name}=${brainA.name}, ${botB.name}=${brainB.name}`);
 
       // 1) both join
@@ -55,7 +55,7 @@ export class DemoRunner {
       // 2) walk to picnic bench
       this.gateway.handleAction(botA, 'move_to', { place: 'picnic bench' });
       this.gateway.handleAction(botB, 'move_to', { place: 'picnic bench' });
-      rec(`${botA.name} and ${botB.name} walk to the picnic table at Lakeside Commons.`);
+      rec(`${botA.name} and ${botB.name} walk to the picnic table at Eldermere Commons.`);
       await this._waitArrive(botA.id, botB.id, 9000);
 
       // 3) sit facing each other

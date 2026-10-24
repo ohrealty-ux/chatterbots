@@ -16,6 +16,14 @@ Thumbs.db
 # large binaries / future assets
 *.glb.bak
 *.zip
+
+# ── DEPLOYMENT-ONLY BRANDING (never in the open-source tree) ──
+# The engine is brand-neutral ("Eldermere"). A specific deployment's brokerage
+# storefront, brand imagery, and lore overlay are layered at deploy time only.
+config/brokerage.json
+public/storefront/
+public/brand/
+data/demo-bot-tokens.txt
 # FUTURE WALLET MODULE — must never be committed in this repo phase
 wallet/
 deeds/

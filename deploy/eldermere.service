@@ -1,0 +1,16 @@
+[Unit]
+Description=Eldermere metaverse server (IvyRealty.Ai deployment)
+After=network-online.target
+Wants=network-online.target
+RequiresMountsFor=/home/ubuntu
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/ivy-metaverse
+EnvironmentFile=/home/ubuntu/ivy-metaverse/.env
+ExecStart=/usr/bin/node src/server.js
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

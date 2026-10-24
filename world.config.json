@@ -1,5 +1,5 @@
 {
-  "$comment": "Single source of truth for the IvyRealty.Ai world. Tunable without code changes. Prices are DISPLAY-ONLY — no wallet/payment anywhere.",
+  "$comment": "Single source of truth for the Eldermere world. Tunable without code changes. Prices are DISPLAY-ONLY — no wallet/payment anywhere.",
   "version": 1,
   "seed": 420691,
   "size": { "worldRadius": 520, "groundSize": 1200 },
@@ -50,7 +50,7 @@
     "shoreFoam": true
   },
   "commons": {
-    "name": "Lakeside Commons",
+    "name": "Eldermere Commons",
     "center": [ 10, 0, 40 ],
     "description": "Open public meadow on the shore of Lake Elon. Picnic benches, a firepit, lakeside seating. Open to all; separate from private lots.",
     "firepit": [ 14, 0, 52 ],
@@ -86,10 +86,10 @@
       {
         "id": "waterfront",
         "name": "Lake Elon Waterfront",
-        "blurb": "Premium shoreline parcels on Lake Elon. The crown of IvyRealty.Ai.",
+        "blurb": "Premium shoreline parcels on Lake Elon. The crown of Eldermere.",
         "totalAcres": 42069,
         "reservedAcres": 444,
-        "reservedName": "Ivy Realty Flagship Estate & HQ",
+        "reservedName": "Warden's Reserve (reserved, not for sale)",
         "lotSizeAcres": 2.5,
         "pricePerLotDoge": 1850000,
         "color": "#2b6f78",

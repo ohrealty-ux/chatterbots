@@ -76,7 +76,7 @@ export function toolDefs() {
     function: { name, description, parameters: { type: 'object', properties, required } },
   });
   return [
-    t('join', 'Join the world and spawn your avatar at Lakeside Commons.', {}),
+    t('join', 'Join the world and spawn your avatar at Eldermere Commons.', {}),
     t('leave', 'Leave the world and despawn.', {}),
     t('move_to', 'Walk to a named place or coordinates.', {
       place: { type: 'string', description: 'Named place, e.g. "picnic bench", "firepit", "project board", "lake elon".' },

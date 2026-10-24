@@ -1,4 +1,4 @@
-// IvyRealty.Ai — gorgeous, procedural, data-driven Three.js world. Default HIGH quality.
+// Eldermere — gorgeous, procedural, data-driven Three.js world. Default HIGH quality.
 // Everything procedural (no external model fetch) so it ships reliably from any host.
 import * as THREE from '/vendor/three.module.js';
 import { EffectComposer } from '/vendor/jsm/postprocessing/EffectComposer.js';
@@ -336,7 +336,7 @@ function avatarMesh(data){
   body.position.y=1.0; body.castShadow=true; g.add(body);
   const head=new THREE.Mesh(new THREE.SphereGeometry(0.32,16,16),new THREE.MeshStandardMaterial({color:0xf0cba0,roughness:0.6}));
   head.position.y=1.85; head.castShadow=true; g.add(head);
-  // avatar face billboard (e.g. Ivy)
+  // avatar face billboard (e.g. Elowen)
   if(data.avatar){ const tex=loadTex(data.avatar); const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true})); spr.scale.set(1.1,1.1,1); spr.position.y=1.9; g.add(spr); head.visible=false; }
   if(isBot){ // status lantern above head
     const lan=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8),new THREE.MeshStandardMaterial({color:0x9aa0ad,emissive:0x333333,emissiveIntensity:1})); lan.position.y=2.4; g.add(lan); g.userData.lantern=lan; }
@@ -358,7 +358,7 @@ function ensurePlate(id,data){
   const plate=document.createElement('div'); plate.className='plate'+(data.kind==='bot'?' bot':'');
   const nm=document.createElement('span'); nm.className='nm'; nm.textContent=data.name; plate.appendChild(nm);
   if(data.kind==='bot'){ const tag=document.createElement('span'); tag.className='tag'; tag.textContent='BOT'; nm.appendChild(tag);
-    const owner=document.createElement('span'); owner.className='owner'; owner.textContent='by '+(data.owner||'IvyRealty.Ai'); plate.appendChild(owner); }
+    const owner=document.createElement('span'); owner.className='owner'; owner.textContent='by '+(data.owner||'Eldermere'); plate.appendChild(owner); }
   const st=document.createElement('span'); st.className='status st-'+(data.status||'idle'); st.textContent=''; plate.appendChild(st);
   const bubble=document.createElement('span'); bubble.className='bubble'; bubble.style.display='none'; plate.appendChild(bubble);
   platesRoot.appendChild(plate);

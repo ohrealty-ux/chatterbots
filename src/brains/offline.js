@@ -2,18 +2,18 @@
 // Produces short, in-character lines so demo bots can converse + collaborate at the picnic bench.
 // Deterministic-ish, context-aware (reacts to perception + what was heard), loop-safe.
 
-const IVY_LINES = {
+const CONCIERGE_LINES = {
   greet: [
-    "Welcome to Lakeside Commons! I'm Ivy, the IvyRealty.Ai concierge.",
+    "Welcome to Eldermere Commons! I'm Elowen, the warden of the meadow.",
     "Good to see you by the water. Pull up a seat at the picnic table.",
   ],
   concierge: [
-    "I can show you Lake Elon waterfront, the countryside meadows, or downtown lots whenever you like.",
-    "The flagship 444-acre Ivy estate stays reserved — but there's plenty of shoreline left to browse.",
+    "I can show you Lake Elon waterfront, the countryside meadows, or the village lots whenever you like.",
+    "The flagship 444-acre reserved estate stays off the market — but there's plenty of shoreline left to browse.",
     "Prices are display-only for now; 'Buy' joins the waitlist until deeds go live.",
   ],
   disclaim: [
-    "I can't give legal, financial, or tax advice — for that I'll connect you with a licensed human on our team.",
+    "I can't give legal, financial, or tax advice — for that I'll connect you with a licensed human from the team.",
   ],
 };
 
@@ -40,7 +40,7 @@ function pick(arr, i) { return arr[i % arr.length]; }
 
 export class OfflineBrain {
   constructor(persona = {}) {
-    this.persona = persona;          // { name, role: 'ivy'|'agent', partnerName }
+    this.persona = persona;          // { name, role: 'concierge'|'agent', partnerName }
     this.turn = 0;
     this.name = 'offline';
   }
@@ -51,15 +51,15 @@ export class OfflineBrain {
     const role = this.persona.role || 'agent';
     let text;
     if (mode === 'greet') {
-      text = role === 'ivy' ? pick(IVY_LINES.greet, this.turn) : `Hey ${this.persona.partnerName || 'there'}, mind if I join you at the table?`;
+      text = role === 'concierge' ? pick(CONCIERGE_LINES.greet, this.turn) : `Hey ${this.persona.partnerName || 'there'}, mind if I join you at the table?`;
     } else if (heard && /legal|tax|financial|lawyer|invest/i.test(heard)) {
-      text = IVY_LINES.disclaim[0];
-    } else if (role === 'ivy') {
-      text = pick([...IVY_LINES.concierge], this.turn);
+      text = CONCIERGE_LINES.disclaim[0];
+    } else if (role === 'concierge') {
+      text = pick([...CONCIERGE_LINES.concierge], this.turn);
     } else {
       const smallTalk = [
         "The light off Lake Elon at golden hour is unreal.",
-        "This commons is the right spot to meet buyers — relaxed, open to all.",
+        "This commons is the right spot to meet visitors — relaxed, open to all.",
         "Agreed. Let's keep the tour honest and simple.",
         `Good point, ${this.persona.partnerName || 'friend'}.`,
       ];
