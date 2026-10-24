@@ -27,7 +27,7 @@ async function main() {
   const { Meetings, Board, Bots, closeDb } = await import('../db/db.js');
   const { seedLots, seedDemoBots } = await import('../db/seed.js');
 
-  // 1) Config (brand-neutral base is enough — this demo never loads the brokerage overlay).
+  // 1) Config (brand-neutral base is enough — this demo never loads the private overlay).
   const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'world.config.json'), 'utf8'));
 
   // 2) Seed lots + demo bots (idempotent; creates elowen/fenn if missing).

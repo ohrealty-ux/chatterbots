@@ -180,16 +180,16 @@ function buildGrass(){
 }
 function buildFlowers(){
   const want=quality==='low'?1200:CFG.densities.wildflowerInstances;
-  const g=new THREE.PlaneGeometry(0.34,0.34); g.translate(0,0.32,0);
-  // Palette weighted toward pink / purple / blue (one warm accent for contrast).
-  const colors=['#ec5f9c','#e0579b','#d94fa0','#a06ce0','#8456d8','#6a5ad6','#5a86e0','#4f9be8','#7fc0ef','#f0c04a'];
+  // tiny round flower dots (small spheres — read as round dots from any angle)
+  const g=new THREE.SphereGeometry(0.1,7,6); g.translate(0,0.14,0);
+  // small, colorful, random mix of pinks / purples / blues / warm accents.
+  const colors=['#ec5f9c','#e0579b','#d94fa0','#a06ce0','#8456d8','#6a5ad6','#5a86e0','#4f9be8','#7fc0ef','#f0c04a','#f2f2f2','#ffd24a'];
   flowerMesh=[]; const per=Math.floor(want/colors.length);
-  colors.forEach(col=>{ const im=new THREE.InstancedMesh(g,new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.22,side:THREE.DoubleSide,roughness:1,transparent:true}),per);
+  colors.forEach(col=>{ const im=new THREE.InstancedMesh(g,new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.18,side:THREE.DoubleSide,roughness:1}),per);
     const d=new THREE.Object3D(); let n=0;
-    for(let i=0;i<per;i++){ const cx=10+(noise2(i*0.3,i*0.7)-0.5)*260, cz=48+(noise2(i*0.5,i*0.2)-0.5)*260;
-      const clump=noise2(cx*0.05,cz*0.05); if(clump<0.5) continue; const x=cx+(RND()-0.5)*8,z=cz+(RND()-0.5)*8;
+    for(let i=0;i<per;i++){ const x=10+(RND()-0.5)*300, z=48+(RND()-0.5)*300;
       const h=terrainHeight(x,z); const dl=Math.hypot(x-LAKE.center[0],z-LAKE.center[2]); if(dl<LAKE.radius||h<0.1) continue;
-      d.position.set(x,h,z); d.rotation.y=RND()*6; d.updateMatrix(); im.setMatrixAt(n++,d.matrix); }
+      const s=0.7+RND()*0.9; d.position.set(x,h,z); d.rotation.y=RND()*6; d.scale.setScalar(s); d.updateMatrix(); im.setMatrixAt(n++,d.matrix); }
     im.count=n; im.instanceMatrix.needsUpdate=true; scene.add(im); flowerMesh.push(im); });
 }
 
@@ -356,16 +356,27 @@ function buildCommons(){
   const tableTop=new THREE.Mesh(new THREE.BoxGeometry(3.4,0.14,1.4),wood); tableTop.position.set(px,ph+0.95,pz); tableTop.castShadow=true; scene.add(tableTop);
   [[-1.5,-0.6],[1.5,0.6]].forEach(([ox])=>{ const leg=new THREE.Mesh(new THREE.BoxGeometry(0.14,0.95,1.3),wood); leg.position.set(px+ox,ph+0.47,pz); scene.add(leg);});
   pb.slots.forEach(sl=>{ const bh=terrainHeight(sl.pos[0],sl.pos[2]); const b=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.12,0.4),wood); b.position.set(sl.pos[0],bh+0.5,sl.pos[2]); b.castShadow=true; scene.add(b); addSeatMarker(sl.id,[sl.pos[0],bh+0.55,sl.pos[2]]); });
-  // firepit
-  const [fx,,fz]=C.firepit; const fh=terrainHeight(fx,fz);
-  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.2,0.3,8,16),new THREE.MeshStandardMaterial({color:'#555'})); ring.rotation.x=Math.PI/2; ring.position.set(fx,fh+0.3,fz); scene.add(ring);
-  const fire=new THREE.Mesh(new THREE.ConeGeometry(0.6,1.2,8),new THREE.MeshStandardMaterial({color:'#ff7a2a',emissive:'#ff5a1a',emissiveIntensity:2})); fire.position.set(fx,fh+0.8,fz); scene.add(fire);
-  const fireLight=new THREE.PointLight(0xff7a3a,2,18); fireLight.position.set(fx,fh+1.2,fz); scene.add(fireLight); audioNodes.fire=fire;
-  const fpAnchor=C.seatAnchors.find(s=>s.id==='firepit-ring'); fpAnchor.slots.forEach(sl=>{ const bh=terrainHeight(sl.pos[0],sl.pos[2]); const st=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.4,0.5,8),wood); st.position.set(sl.pos[0],bh+0.25,sl.pos[2]); scene.add(st); addSeatMarker(sl.id,[sl.pos[0],bh+0.5,sl.pos[2]]); });
+  // (firepit removed by design — meadow kept clean and natural)
   // lakeside bench
   const lb=C.seatAnchors.find(s=>s.id==='lakeside-bench'); const [lx,,lz]=lb.center; const lh=terrainHeight(lx,lz);
   const seat=new THREE.Mesh(new THREE.BoxGeometry(2.4,0.12,0.5),wood); seat.position.set(lx,lh+0.5,lz); scene.add(seat);
   lb.slots.forEach(sl=>{ const bh=terrainHeight(sl.pos[0],sl.pos[2]); addSeatMarker(sl.id,[sl.pos[0],bh+0.55,sl.pos[2]]); });
+  // wooden picnic bench beside the dock, facing the water
+  (function(){ const bx=13.5,bz=43,bh=terrainHeight(bx,bz);
+    const seat=new THREE.Mesh(new THREE.BoxGeometry(2.8,0.14,0.62),wood); seat.position.set(bx,bh+0.5,bz); seat.castShadow=true; scene.add(seat);
+    const back=new THREE.Mesh(new THREE.BoxGeometry(2.8,0.52,0.1),wood); back.position.set(bx,bh+0.82,bz+0.28); back.castShadow=true; scene.add(back);
+    [-1.2,1.2].forEach(ox=>{ const lg=new THREE.Mesh(new THREE.BoxGeometry(0.14,0.5,0.56),wood); lg.position.set(bx+ox,bh+0.25,bz); scene.add(lg); }); })();
+  // a nice stone path winding from the spawn clearing down to the dock/picnic area
+  (function(){ const stone=new THREE.MeshStandardMaterial({color:'#9a9aa0',roughness:0.98}),
+                     stoneDk=new THREE.MeshStandardMaterial({color:'#83838a',roughness:0.98});
+    const from=[10.5,56.5], to=[9,40.5], steps=18;
+    for(let i=0;i<=steps;i++){ const t=i/steps;
+      const x=from[0]+(to[0]-from[0])*t + (noise2(i*0.8,3.1)-0.5)*1.6;
+      const z=from[1]+(to[1]-from[1])*t;
+      const h=terrainHeight(x,z); if(h<0.1) continue;
+      const r=0.5+RND()*0.28;
+      const st=new THREE.Mesh(new THREE.CylinderGeometry(r,r,0.1,7), i%2?stone:stoneDk);
+      st.position.set(x,h+0.04,z); st.rotation.y=RND()*6; st.scale.set(1,1,0.8+RND()*0.4); st.receiveShadow=true; scene.add(st); } })();
   // whiteboard / project board
   const [bx,,bz]=C.whiteboard.pos; const bh=terrainHeight(bx,bz);
   const board=new THREE.Mesh(new THREE.BoxGeometry(3,2,0.12),new THREE.MeshStandardMaterial({color:'#f4f4ee'})); board.position.set(bx,bh+2,bz); board.rotation.y=C.whiteboard.facing; board.castShadow=true; scene.add(board);

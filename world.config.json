@@ -125,7 +125,7 @@
     }
   },
   "zoning": {
-    "currency": { "display": "DOGE", "fiatPerDoge": 0.38, "fiatSymbol": "$" },
+    "currency": { "display": "TOKEN", "fiatPerToken": 0.38, "fiatSymbol": "$" },
     "tiers": [
       {
         "id": "waterfront",
@@ -135,7 +135,7 @@
         "reservedAcres": 444,
         "reservedName": "Warden's Reserve (reserved, not for sale)",
         "lotSizeAcres": 2.5,
-        "pricePerLotDoge": 1850000,
+        "pricePerLotToken": 1850000,
         "color": "#2b6f78",
         "mapRect": [ -300, -230, 300, 20 ]
       },
@@ -146,7 +146,7 @@
         "totalAcres": 18000,
         "reservedAcres": 0,
         "lotSizeAcres": 5.0,
-        "pricePerLotDoge": 620000,
+        "pricePerLotToken": 620000,
         "color": "#8fae57",
         "mapRect": [ -300, 20, 300, 230 ]
       },
@@ -157,7 +157,7 @@
         "totalAcres": 3600,
         "reservedAcres": 0,
         "lotSizeAcres": 0.25,
-        "pricePerLotDoge": 95000,
+        "pricePerLotToken": 95000,
         "color": "#b08a5a",
         "mapRect": [ 180, -40, 300, 120 ]
       }

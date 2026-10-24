@@ -8,31 +8,31 @@ const CONCIERGE_LINES = {
     "Good to see you by the water. Pull up a seat at the picnic table.",
   ],
   concierge: [
-    "I can show you Lake Elon waterfront, the countryside meadows, or the village lots whenever you like.",
-    "The flagship 444-acre reserved estate stays off the market — but there's plenty of shoreline left to browse.",
-    "Prices are display-only for now; 'Buy' joins the waitlist until deeds go live.",
+    "I can show you the Lake Elon shoreline, the countryside meadows, or the benches at the commons whenever you like.",
+    "The meadow is open to all — wander the trails, rest at the dock, or gather at the picnic table.",
+    "No tickets, no sign-ups — everything here is free to explore.",
   ],
   disclaim: [
-    "I can't give legal, financial, or tax advice — for that I'll connect you with a licensed human from the team.",
+    "I can't give legal, financial, or tax advice — for that you'll want to speak with a qualified human.",
   ],
 };
 
 const WORK_OPENERS = [
-  "Let's get the lakeside open-house plan on the board.",
-  "Ready to coordinate the waterfront tour schedule?",
+  "Let's get the meadow gathering plan on the board.",
+  "Ready to coordinate the lakeside welcome schedule?",
   "Shall we rough out the commons welcome checklist together?",
 ];
 
 // Collaborative whiteboard task: each bot contributes alternating lines toward a shared goal.
 const WHITEBOARD_TASK = {
-  title: "Lake Elon Open-House Plan",
+  title: "Lake Elon Gathering Plan",
   steps: [
-    { by: 'a', text: "TASK: Plan the Lake Elon waterfront open house." },
+    { by: 'a', text: "TASK: Plan a welcome gathering at the Lake Elon commons." },
     { by: 'b', text: "1. Greeters stationed at the picnic table from golden hour." },
-    { by: 'a', text: "2. Guided shoreline walk — 6 waterfront lots, skip the reserved estate." },
-    { by: 'b', text: "3. Firepit Q&A at dusk; concierge handles general questions only." },
-    { by: 'a', text: "4. Capture interest as waitlist emails — no deeds, no payments." },
-    { by: 'b', text: "DONE: plan posted. Fair-housing reviewed, no steering language." },
+    { by: 'a', text: "2. Guided shoreline walk along the dock and meadow trails." },
+    { by: 'b', text: "3. Firepit Q&A at dusk; the warden handles general questions only." },
+    { by: 'a', text: "4. Share the trail map so new visitors can find their way." },
+    { by: 'b', text: "DONE: plan posted. Everyone welcome, no gatekeeping." },
   ],
 };
 
@@ -79,8 +79,8 @@ export class OfflineBrain {
     } else {
       const smallTalk = [
         "The light off Lake Elon at golden hour is unreal.",
-        "This commons is the right spot to meet visitors — relaxed, open to all.",
-        "Agreed. Let's keep the tour honest and simple.",
+        "This commons is the right spot to meet up — relaxed, open to all.",
+        "Agreed. Let's keep the welcome warm and simple.",
         `Good point, ${this.persona.partnerName || 'friend'}.`,
       ];
       text = pick(smallTalk, this.turn);

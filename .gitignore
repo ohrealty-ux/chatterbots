@@ -4,11 +4,8 @@
 !.env.example
 # deps
 node_modules/
-# runtime data / persistence
-data/*.db
-data/*.db-*
-data/*.sqlite
-data/transcripts/
+# runtime data / persistence (whole data dir — DB, transcripts, tokens)
+data/
 *.log
 # OS
 .DS_Store
@@ -17,18 +14,14 @@ Thumbs.db
 *.glb.bak
 *.zip
 
-# ── DEPLOYMENT-ONLY BRANDING (never in the open-source tree) ──
-# The engine is brand-neutral ("Eldermere"). A specific deployment's brokerage
-# storefront, brand imagery, and lore overlay are layered at deploy time only.
+# ── PRIVATE DEPLOYMENT ASSETS (never in the open-source tree) ──
+# The engine is brand-neutral ("Eldermere"). A specific private deployment's
+# storefront, brand imagery, and lore overlay are layered in at deploy time only.
 config/brokerage.json
+config/overlay.json
 public/storefront/
 public/brand/
 data/demo-bot-tokens.txt
-# FUTURE WALLET MODULE — must never be committed in this repo phase
-wallet/
-deeds/
-payments/
-chain/
-*.wallet
-*.keystore
+# Private optional modules and local secrets — never committed
 secrets.*
+*.keystore

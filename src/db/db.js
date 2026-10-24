@@ -1,4 +1,4 @@
-// SQLite persistence layer. Stores bots, lots/registry, waitlist, brokerage leads,
+// SQLite persistence layer. Stores bots, lots/registry, waitlist, leads,
 // chat log, audit log, moderation log. Chosen over Postgres for zero-dependency reliability.
 import Database from 'better-sqlite3';
 import path from 'node:path';
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS lots (
   tier TEXT NOT NULL,
   boundaries TEXT,
   acreage REAL,
-  list_price_doge REAL,
+  list_price_token REAL,
   list_price_fiat REAL,
   owner TEXT,
   assigned_bot TEXT,
@@ -128,9 +128,9 @@ export const Bots = {
 
 export const Lots = {
   upsert(l) {
-    db.prepare(`INSERT INTO lots (id,tier,boundaries,acreage,list_price_doge,list_price_fiat,owner,assigned_bot,permissions,decor_layout,reserved,label)
-      VALUES (@id,@tier,@boundaries,@acreage,@list_price_doge,@list_price_fiat,@owner,@assigned_bot,@permissions,@decor_layout,@reserved,@label)
-      ON CONFLICT(id) DO UPDATE SET tier=@tier,boundaries=@boundaries,acreage=@acreage,list_price_doge=@list_price_doge,list_price_fiat=@list_price_fiat,reserved=@reserved,label=@label`).run(l);
+    db.prepare(`INSERT INTO lots (id,tier,boundaries,acreage,list_price_token,list_price_fiat,owner,assigned_bot,permissions,decor_layout,reserved,label)
+      VALUES (@id,@tier,@boundaries,@acreage,@list_price_token,@list_price_fiat,@owner,@assigned_bot,@permissions,@decor_layout,@reserved,@label)
+      ON CONFLICT(id) DO UPDATE SET tier=@tier,boundaries=@boundaries,acreage=@acreage,list_price_token=@list_price_token,list_price_fiat=@list_price_fiat,reserved=@reserved,label=@label`).run(l);
   },
   get(id) { return db.prepare('SELECT * FROM lots WHERE id=?').get(id); },
   all() { return db.prepare('SELECT * FROM lots').all(); },

@@ -1,9 +1,28 @@
 {
-  "name": "ivyrealty-metaverse",
+  "name": "eldermere",
   "version": "0.1.0",
-  "description": "IvyRealty.Ai — open-source browser metaverse + brokerage storefront + bot gateway for cloud Grok bots.",
+  "description": "Eldermere — an open-source browser metaverse where Grok-powered cloud bots and human avatars meet up in a shared 3D meadow and hold working rendezvous. Includes a bot gateway and SDKs.",
   "type": "module",
   "license": "MIT",
+  "keywords": [
+    "metaverse",
+    "3d",
+    "three.js",
+    "bots",
+    "agents",
+    "grok",
+    "websocket",
+    "multiplayer",
+    "open-source"
+  ],
+  "homepage": "https://github.com/eldermere/eldermere#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eldermere/eldermere.git"
+  },
+  "bugs": {
+    "url": "https://github.com/eldermere/eldermere/issues"
+  },
   "engines": { "node": ">=20" },
   "scripts": {
     "start": "node src/server.js",

@@ -1,4 +1,4 @@
-// Eldermere — open-metaverse server. World WS + Bot Gateway + admin (+ optional brokerage overlay).
+// Eldermere — open-metaverse server. World WS + Bot Gateway + admin (+ optional private overlay).
 import 'dotenv/config';
 import express from 'express';
 import http from 'node:http';
@@ -30,8 +30,8 @@ const PORT = Number(process.env.PORT) || 3000;
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 
 // Base engine config (brand-neutral, open-source). An optional gitignored overlay at
-// config/brokerage.json lets a deployment layer its own lore/zoning (e.g. a real-estate
-// brokerage) on top WITHOUT shipping that content in the open-source tree.
+// config/overlay.json lets a private deployment layer its own lore/zoning on top
+// WITHOUT shipping that content in the open-source tree.
 function deepMerge(base, over) {
   for (const k of Object.keys(over)) {
     const o = over[k], b = base[k];
@@ -49,16 +49,16 @@ function deepMerge(base, over) {
   }
   return base;
 }
-// BRAND_NEUTRAL=1 forces a pure open-metaverse deployment: the brokerage overlay, storefront
+// BRAND_NEUTRAL=1 forces a pure open-metaverse deployment: the private overlay, storefront
 // and brand assets are ignored even if present on disk, so the public site is 100% neutral.
 const NEUTRAL = process.env.BRAND_NEUTRAL === '1';
 const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'world.config.json'), 'utf8'));
-const OVERLAY = path.join(ROOT, 'config', 'brokerage.json');
+const OVERLAY = path.join(ROOT, 'config', 'overlay.json');
 if (NEUTRAL) {
-  log('[config] BRAND_NEUTRAL=1 — open-metaverse mode: brokerage overlay/storefront/brand disabled.');
+  log('[config] BRAND_NEUTRAL=1 — open-metaverse mode: private overlay/storefront/brand disabled.');
 } else if (fs.existsSync(OVERLAY)) {
-  try { deepMerge(config, JSON.parse(fs.readFileSync(OVERLAY, 'utf8'))); log('[config] brokerage overlay applied'); }
-  catch (e) { log('[config] brokerage overlay failed to parse, ignoring:', e.message); }
+  try { deepMerge(config, JSON.parse(fs.readFileSync(OVERLAY, 'utf8'))); log('[config] private overlay applied'); }
+  catch (e) { log('[config] private overlay failed to parse, ignoring:', e.message); }
 }
 const HAS_STOREFRONT = !NEUTRAL && fs.existsSync(path.join(PUBLIC, 'storefront', 'index.html'));
 const SERVE_BRAND = !NEUTRAL && fs.existsSync(path.join(PUBLIC, 'brand'));
@@ -158,7 +158,7 @@ app.get('/api/lots', (_req, res) => {
   res.setHeader('Cache-Control', 'max-age=0, s-maxage=30');
   const lots = Lots.all().map(l => ({
     id: l.id, tier: l.tier, acreage: l.acreage, label: l.label,
-    priceDoge: l.list_price_doge, priceFiat: l.list_price_fiat,
+    priceToken: l.list_price_token, priceFiat: l.list_price_fiat,
     available: !l.owner && !l.reserved, reserved: !!l.reserved,
     owner: l.owner ? 'owned' : null, assignedBot: l.assigned_bot,
     boundaries: JSON.parse(l.boundaries || '{}'), decor: JSON.parse(l.decor_layout || '[]'),
@@ -184,7 +184,7 @@ app.post('/api/waitlist', jsonParser, (req, res) => {
   const tier = sanitizeText(req.body?.tier || '', 40) || null;
   const id = Waitlist.add(email, lotId, tier);
   AuditLog.add('visitor', 'waitlist', { email, lotId, tier });
-  res.json({ ok: true, id, message: 'Deeds coming soon — you are on the waitlist.' });
+  res.json({ ok: true, id, message: 'Thanks — you are on the list.' });
 });
 
 app.post('/api/lead', jsonParser, (req, res) => {
@@ -271,7 +271,7 @@ app.post('/admin/api/mute', requireAdmin, jsonParser, (req, res) => {
 
 // ───────── static ─────────
 // World client at /world, admin at /admin, 3D assets at /vendor + /client (all open-source).
-// The optional brokerage storefront + brand assets are served only if present (deploy overlay).
+// The optional private storefront + brand assets are served only if present (deploy overlay).
 app.use('/vendor', express.static(path.join(PUBLIC, 'vendor'), { maxAge: '1d' }));
 app.use('/client', express.static(path.join(PUBLIC, 'client'), { maxAge: 0, setHeaders: r => r.setHeader('Cache-Control', 'max-age=0, s-maxage=60') }));
 app.use('/admin', express.static(path.join(PUBLIC, 'admin'), { maxAge: 0, setHeaders: r => r.setHeader('Cache-Control', 'max-age=0, s-maxage=60') }));
@@ -279,7 +279,7 @@ if (SERVE_BRAND) app.use('/brand', express.static(path.join(PUBLIC, 'brand'), { 
 if (HAS_STOREFRONT) app.use(express.static(path.join(PUBLIC, 'storefront'), { maxAge: 0, setHeaders: r => r.setHeader('Cache-Control', 'max-age=0, s-maxage=60') }));
 app.get('/world', (_req, res) => res.sendFile(path.join(PUBLIC, 'client', 'index.html')));
 app.get('/admin', (_req, res) => res.sendFile(path.join(PUBLIC, 'admin', 'admin.html')));
-// Root: brokerage storefront if present, otherwise the open meadow.
+// Root: private storefront if present, otherwise the open meadow.
 if (!HAS_STOREFRONT) app.get('/', (_req, res) => res.redirect('/world'));
 app.get('/healthz', (_req, res) => res.json({ ok: true, up: process.uptime() }));
 

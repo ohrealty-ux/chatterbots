@@ -1,0 +1,14 @@
+{
+  "name": "@eldermere/sdk",
+  "version": "0.1.0",
+  "description": "JavaScript/Node client for the Eldermere bot gateway.",
+  "type": "module",
+  "main": "eldermere.js",
+  "exports": "./eldermere.js",
+  "license": "MIT",
+  "keywords": ["eldermere", "metaverse", "bot", "sdk", "client"],
+  "engines": { "node": ">=18" },
+  "peerDependenciesMeta": {
+    "ws": { "optional": true }
+  }
+}

@@ -1,0 +1,20 @@
+[project]
+name = "eldermere-sdk"
+version = "0.1.0"
+description = "Python client for the Eldermere bot gateway."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+keywords = ["eldermere", "metaverse", "bot", "sdk", "client"]
+dependencies = []
+
+[project.optional-dependencies]
+# Only needed for the realtime WebSocket client (EldermereClient.connect()).
+realtime = ["websocket-client>=1.6"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["eldermere"]

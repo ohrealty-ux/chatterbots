@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 
 // ───────── Bot auth tokens: random, stored only as a hash, prefix for lookup ─────────
 export function generateToken() {
-  const raw = 'ivy_' + crypto.randomBytes(24).toString('base64url'); // the only time the plaintext exists
+  const raw = 'eldr_' + crypto.randomBytes(24).toString('base64url'); // the only time the plaintext exists
   const prefix = raw.slice(0, 12);
   const hash = hashToken(raw);
   return { raw, prefix, hash };

@@ -3,7 +3,7 @@
 import { Bots, Lots } from './db.js';
 import { generateToken } from '../security/security.js';
 
-function fiat(doge, cfg) { return Math.round(doge * cfg.zoning.currency.fiatPerDoge); }
+function fiat(token, cfg) { return Math.round(token * cfg.zoning.currency.fiatPerToken); }
 
 // Deterministic lot layout per tier, limited to a sane number of registry rows for display.
 export function seedLots(cfg) {
@@ -25,8 +25,8 @@ export function seedLots(cfg) {
         id, tier: tier.id,
         boundaries: JSON.stringify({ x: Math.round(bx), z: Math.round(bz), w: 28, h: 22 }),
         acreage: tier.lotSizeAcres,
-        list_price_doge: tier.pricePerLotDoge,
-        list_price_fiat: fiat(tier.pricePerLotDoge, cfg),
+        list_price_token: tier.pricePerLotToken,
+        list_price_fiat: fiat(tier.pricePerLotToken, cfg),
         owner: null, assigned_bot: null,
         permissions: '{}', decor_layout: '[]', reserved: 0,
         label: `${tier.name} Lot ${i + 1}`,
@@ -38,7 +38,7 @@ export function seedLots(cfg) {
     id: 'waterfront-flagship', tier: 'waterfront',
     boundaries: JSON.stringify({ x: -120, z: -120, w: 90, h: 70 }),
     acreage: cfg.zoning.tiers[0].reservedAcres,
-    list_price_doge: 0, list_price_fiat: 0,
+    list_price_token: 0, list_price_fiat: 0,
     owner: 'eldermere', assigned_bot: null, permissions: '{}', decor_layout: '[]',
     reserved: 1, label: cfg.zoning.tiers[0].reservedName,
   });
@@ -54,8 +54,8 @@ export function tierSummary(cfg) {
       id: t.id, name: t.name, blurb: t.blurb, color: t.color,
       totalAcres: t.totalAcres, reservedAcres: t.reservedAcres || 0, reservedName: t.reservedName || null,
       lotSizeAcres: t.lotSizeAcres,
-      pricePerLotDoge: t.pricePerLotDoge,
-      pricePerLotFiat: fiat(t.pricePerLotDoge, cfg),
+      pricePerLotToken: t.pricePerLotToken,
+      pricePerLotFiat: fiat(t.pricePerLotToken, cfg),
       availableLots: totalLots - sold, totalLots,
     };
   });
