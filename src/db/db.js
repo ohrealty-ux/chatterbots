@@ -9,8 +9,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, '..', '..', 'data');
 fs.mkdirSync(DATA_DIR, { recursive: true });
 
-const db = new Database(path.join(DATA_DIR, 'world.db'));
+// DB file is overridable via WORLD_DB (relative paths resolve under data/). This lets the
+// headless demo run against its own file instead of sharing the live server's world.db.
+const DB_FILE = process.env.WORLD_DB
+  ? (path.isAbsolute(process.env.WORLD_DB) ? process.env.WORLD_DB : path.join(DATA_DIR, process.env.WORLD_DB))
+  : path.join(DATA_DIR, 'world.db');
+const db = new Database(DB_FILE);
 db.pragma('journal_mode = WAL');
+
+// Cleanly finalize all prepared statements and close the handle. Call before a short-lived
+// process exits (e.g. the headless demo) to avoid better-sqlite3's teardown assertion on Node 24.
+export function closeDb() { try { db.close(); } catch { /* already closed */ } }
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS bots (
@@ -71,6 +80,17 @@ CREATE TABLE IF NOT EXISTS moderation_log (
 CREATE TABLE IF NOT EXISTS board_posts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   board TEXT, author TEXT, text TEXT, created_at INTEGER
+);
+CREATE TABLE IF NOT EXISTS meetings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  from_bot TEXT NOT NULL,
+  to_bot TEXT NOT NULL,
+  place TEXT,
+  place_label TEXT,
+  time_label TEXT,
+  fire_at INTEGER,
+  status TEXT DEFAULT 'pending',
+  created_at INTEGER
 );
 `);
 
@@ -144,6 +164,35 @@ export const ModLog = {
 export const Board = {
   add(board, author, text) { return db.prepare('INSERT INTO board_posts (board,author,text,created_at) VALUES (?,?,?,?)').run(board, author, text, now()).lastInsertRowid; },
   byBoard(board, n = 50) { return db.prepare('SELECT * FROM board_posts WHERE board=? ORDER BY id DESC LIMIT ?').all(board, n).reverse(); }
+};
+
+// Bot-to-bot meetings / rendezvous. status: pending -> accepted|declined -> active -> done.
+export const Meetings = {
+  add(m) {
+    return db.prepare(`INSERT INTO meetings (from_bot,to_bot,place,place_label,time_label,fire_at,status,created_at)
+      VALUES (@from_bot,@to_bot,@place,@place_label,@time_label,@fire_at,@status,@created_at)`).run({
+        from_bot: m.fromBot, to_bot: m.toBot, place: m.place || null, place_label: m.placeLabel || null,
+        time_label: m.timeLabel || null, fire_at: m.fireAt ?? null, status: m.status || 'pending', created_at: now(),
+      }).lastInsertRowid;
+  },
+  get(id) { return db.prepare('SELECT * FROM meetings WHERE id=?').get(id); },
+  setStatus(id, status) { db.prepare('UPDATE meetings SET status=? WHERE id=?').run(status, id); },
+  setFireAt(id, fireAt) { db.prepare('UPDATE meetings SET fire_at=? WHERE id=?').run(fireAt, id); },
+  // Open meetings where a bot is organiser or invitee.
+  forBot(botId) {
+    return db.prepare(`SELECT * FROM meetings WHERE (from_bot=? OR to_bot=?)
+      AND status IN ('pending','accepted','active') ORDER BY id DESC`).all(botId, botId);
+  },
+  // Accepted meetings whose scheduled time has arrived (relative/demo timers).
+  dueAccepted(ts) {
+    return db.prepare("SELECT * FROM meetings WHERE status='accepted' AND fire_at IS NOT NULL AND fire_at<=?").all(ts);
+  },
+  // Pending/accepted duplicate guard for the natural-language auto-proposer.
+  openBetween(fromBot, toBot, place) {
+    return db.prepare(`SELECT * FROM meetings WHERE from_bot=? AND to_bot=? AND place=?
+      AND status IN ('pending','accepted','active')`).get(fromBot, toBot, place);
+  },
+  all(n = 100) { return db.prepare('SELECT * FROM meetings ORDER BY id DESC LIMIT ?').all(n); },
 };
 
 export default db;

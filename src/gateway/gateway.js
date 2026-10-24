@@ -14,6 +14,7 @@ export class Gateway {
     this.sessions = new Map();          // botId -> { ws|null, entityId, send }
     this.actionLimiter = new RateLimiter();
     this.msgWindow = new WindowCounter(60000);
+    this.rendezvous = null;             // set by server after construction (RendezvousManager)
     this._wireWorldEvents();
   }
 
@@ -71,9 +72,30 @@ export class Gateway {
     if (action === 'join') return this.join(botRow);
     if (action === 'leave') return this.leave(botRow.id);
 
+    // Meeting / rendezvous actions are intercepted here (no world-scope gate; available to
+    // every bot). They do not require an active session except where noted.
+    if (action === 'propose_meeting') {
+      if (!this.rendezvous) return { ok: false, error: 'rendezvous_unavailable' };
+      return this.rendezvous.propose({ fromBotId: botRow.id, withRef: args.with, place: args.place, time: args.time });
+    }
+    if (action === 'respond_meeting') {
+      if (!this.rendezvous) return { ok: false, error: 'rendezvous_unavailable' };
+      return this.rendezvous.respond({ botId: botRow.id, meetingId: args.meetingId, accept: !!args.accept });
+    }
+    if (action === 'list_meetings') {
+      if (!this.rendezvous) return { ok: false, error: 'rendezvous_unavailable' };
+      return { ok: true, meetings: this.rendezvous.list(botRow.id) };
+    }
+
     const s = this.sessions.get(botRow.id);
     if (!s) return { ok: false, error: 'not_joined' };
     const out = dispatch(this.world, botRow, s.entityId, action, args);
+    // Natural-language rendezvous trigger: a plain "say" that proposes a meeting auto-creates
+    // a proposal to the addressed/nearest bot. Meeting conversation uses world.say directly,
+    // so it never re-enters this path (no recursion).
+    if (action === 'say' && out.ok && this.rendezvous) {
+      try { this.rendezvous.maybeAutoPropose(botRow, out.text || String(args.text || '')); } catch { /* non-fatal */ }
+    }
     return out;
   }
 

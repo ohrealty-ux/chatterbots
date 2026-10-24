@@ -29,19 +29,54 @@ export class World extends EventEmitter {
     this.loop.unref?.();
   }
 
+  // Build the named-place index. Produces two maps keyed by normalized name:
+  //   this.namedPlaces  name -> [x,0,z]                       (back-compat: resolvePlace)
+  //   this.landmarks    name -> { pos, label, seatAnchorId }  (rich: resolveLandmark)
+  // Data-driven: reads config.landmarks (canonical + aliases) when present, and always
+  // derives sensible defaults from commons/lake so the resolver works even without that block.
   _buildPlaces(cfg) {
-    const p = {};
+    const places = {};
+    const landmarks = {};
     const c = cfg.commons;
-    p[c.name.toLowerCase()] = c.center;
-    p['commons'] = c.center;
-    p['picnic bench'] = cfg.commons.seatAnchors.find(s => s.id === 'picnic-bench').center;
-    p['picnic table'] = cfg.commons.seatAnchors.find(s => s.id === 'picnic-bench').center;
-    p['firepit'] = cfg.commons.firepit;
-    p['project board'] = cfg.commons.whiteboard.pos;
-    p['whiteboard'] = cfg.commons.whiteboard.pos;
-    p['lake elon'] = cfg.lake.center;
-    p['lakeside bench'] = cfg.commons.seatAnchors.find(s => s.id === 'lakeside-bench').center;
-    return p;
+    const anchorCenter = (id) => { const a = (c.seatAnchors || []).find(s => s.id === id); return a ? a.center : null; };
+    const put = (names, pos, label, seatAnchorId = null) => {
+      if (!pos) return;
+      for (const n of names) {
+        const k = this._normKey(n);
+        if (!k) continue;
+        places[k] = pos;
+        landmarks[k] = { pos, label: label || names[0], seatAnchorId: seatAnchorId || null };
+      }
+    };
+
+    // Defaults derived from the world (always available).
+    put([c.name, 'commons', 'eldermere commons'], c.center, 'Eldermere Commons');
+    put(['picnic bench', 'picnic table'], anchorCenter('picnic-bench'), 'Picnic Table', 'picnic-bench');
+    put(['firepit', 'fire pit'], c.firepit, 'Firepit', 'firepit-ring');
+    put(['project board', 'whiteboard'], c.whiteboard && c.whiteboard.pos, 'Project Board');
+    put(['lakeside bench', 'the bench'], anchorCenter('lakeside-bench'), 'Lakeside Bench', 'lakeside-bench');
+    if (cfg.lake) put([cfg.lake.name, 'lake elon', 'the lake'], cfg.lake.center, cfg.lake.name || 'Lake Elon');
+
+    // Config-driven canonical landmarks (override/extend defaults).
+    const lm = cfg.landmarks || {};
+    const canon = lm.canonical || {};
+    for (const [key, def] of Object.entries(canon)) {
+      if (def && Array.isArray(def.pos)) put([key, def.label || key], def.pos, def.label || key, def.seatAnchor || null);
+    }
+    // Config-driven aliases -> resolve to a canonical/known key.
+    for (const [alias, target] of Object.entries(lm.aliases || {})) {
+      const tk = this._normKey(target);
+      const t = landmarks[tk];
+      if (t) { const k = this._normKey(alias); places[k] = t.pos; landmarks[k] = t; }
+    }
+
+    this.landmarks = landmarks;
+    return places;
+  }
+
+  // Normalize a spoken place name: lowercase, strip punctuation, collapse whitespace.
+  _normKey(name) {
+    return String(name || '').toLowerCase().replace(/[.,!?;:'"]/g, ' ').replace(/\s+/g, ' ').trim();
   }
 
   _initSeats(cfg) {
@@ -52,10 +87,31 @@ export class World extends EventEmitter {
     }
   }
 
+  // Resolve a spoken place name to [x,0,z] (back-compatible). Case-insensitive, tolerant:
+  // exact normalized match, then with a leading "the " dropped.
   resolvePlace(name) {
+    const lm = this.resolveLandmark(name);
+    return lm ? lm.pos : null;
+  }
+
+  // Resolve to a rich landmark { pos, label, seatAnchorId } or null.
+  resolveLandmark(name) {
     if (!name) return null;
-    const key = String(name).toLowerCase().trim();
-    return this.namedPlaces[key] || null;
+    const key = this._normKey(name);
+    if (this.landmarks[key]) return this.landmarks[key];
+    if (key.startsWith('the ') && this.landmarks[key.slice(4)]) return this.landmarks[key.slice(4)];
+    return null;
+  }
+
+  // List of all known landmark keys (longest first) — used by the NL meeting parser.
+  landmarkKeys() {
+    return Object.keys(this.landmarks).sort((a, b) => b.length - a.length);
+  }
+
+  // First free seat slot id within a given seat anchor (e.g. 'lakeside-bench'), or null.
+  freeSeatIn(anchorId) {
+    for (const [sid, s] of this.seats) if (s.anchorId === anchorId && !s.occupant) return sid;
+    return null;
   }
 
   // ───────── entity lifecycle ─────────

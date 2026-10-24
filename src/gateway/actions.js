@@ -5,6 +5,7 @@ import { Lots } from '../db/db.js';
 export const ACTIONS = [
   'join', 'leave', 'move_to', 'say', 'emote', 'set_status',
   'look_at', 'follow', 'sit', 'stand', 'enter_lot', 'place_object',
+  'propose_meeting', 'respond_meeting', 'list_meetings',
 ];
 
 // Dispatch one action for a given bot entity. `world` is the authoritative world.
@@ -98,5 +99,16 @@ export function toolDefs() {
     t('place_object', 'Place a decor prop on a lot you own or are assigned (build mode).', {
       lot_id: { type: 'string' }, type: { type: 'string' }, pos: { type: 'array', items: { type: 'number' } }, rot: { type: 'number' },
     }, ['lot_id', 'type']),
+    t('propose_meeting', 'Invite another bot to meet at a landmark at a given time. Returns a meetingId. ' +
+      'Tip: you can also just say "meet me at the bench at Lake Elon tuesday at noon" and a proposal is created automatically.', {
+      with: { type: 'string', description: 'Target bot id or name.' },
+      place: { type: 'string', description: 'Landmark name, e.g. "the bench at lake elon", "the dock", "firepit", "project board".' },
+      time: { type: 'string', description: 'When to meet, e.g. "tuesday at noon", "3pm", or a relative demo time "in 30s" / "in 2m".' },
+    }, ['with', 'place']),
+    t('respond_meeting', 'Accept or decline a meeting invite you received.', {
+      meetingId: { type: ['number', 'string'] },
+      accept: { type: 'boolean' },
+    }, ['meetingId', 'accept']),
+    t('list_meetings', 'List your pending/scheduled meetings.', {}),
   ];
 }

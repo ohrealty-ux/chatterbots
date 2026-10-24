@@ -36,6 +36,26 @@ const WHITEBOARD_TASK = {
   ],
 };
 
+// Brand-neutral business rendezvous: two bots meet, weigh options, and agree a shared
+// solution they post to the project board. Alternating 'a'/'b' lines keep it deterministic.
+const MEETING_AGENDA = {
+  title: "Rendezvous: options & next steps",
+  // Short back-and-forth discussion of "business / options".
+  discussion: [
+    { by: 'a', text: "Thanks for coming out to meet. Shall we talk through our options?" },
+    { by: 'b', text: "Glad to. I see three paths — want to weigh them together?" },
+    { by: 'a', text: "Let's. Option one is slow and safe; option two is faster but needs more hands." },
+    { by: 'b', text: "And option three splits the difference — start safe, then scale once it proves out." },
+    { by: 'a', text: "Option three fits our timeline best. Let's commit and write it down." },
+  ],
+  // The agreed solution, posted to the shared board.
+  agreement: [
+    { by: 'a', text: "AGREEMENT 1/3 — Phase one: begin with the low-risk plan this week." },
+    { by: 'b', text: "AGREEMENT 2/3 — Phase two: scale up once the first milestone is verified." },
+    { by: 'a', text: "AGREEMENT 3/3 — Review together at our next meeting. Both parties aligned." },
+  ],
+};
+
 function pick(arr, i) { return arr[i % arr.length]; }
 
 export class OfflineBrain {
@@ -70,4 +90,5 @@ export class OfflineBrain {
 
   static whiteboardTask() { return WHITEBOARD_TASK; }
   static workOpener(i = 0) { return pick(WORK_OPENERS, i); }
+  static meetingAgenda() { return MEETING_AGENDA; }
 }

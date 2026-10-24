@@ -9,6 +9,7 @@
     "start": "node src/server.js",
     "dev": "node src/server.js",
     "demo": "node scripts/trigger-demo.js",
+    "demo:meeting": "WORLD_DB=meeting-demo.db node --expose-gc src/world/meetingDemo.js",
     "lint": "eslint src sdk/js scripts --ext .js || true",
     "test": "node --test test/"
   },

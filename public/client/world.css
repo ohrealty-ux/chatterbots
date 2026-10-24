@@ -72,3 +72,6 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0b1026; color:#ff
 #talktip{ position:fixed; left:50%; top:16%; transform:translateX(-50%); background:var(--panel);
   padding:8px 14px; border-radius:10px; font-size:.85rem; z-index:12; border:1px solid rgba(212,175,55,.4); }
 @media(max-width:760px){ #chatpanel{ width:62vw; } .hud-wordmark{ height:20px; } }
+
+/* landing lede — states what Eldermere is */
+.join-card .lede{ font-size:1.05rem; font-weight:600; color:#efe7d2; margin:.2rem 0 .5rem; letter-spacing:.2px; }

@@ -10,6 +10,7 @@ import { WebSocketServer } from 'ws';
 
 import { World } from './world/world.js';
 import { Gateway } from './gateway/gateway.js';
+import { RendezvousManager } from './gateway/rendezvous.js';
 import { DemoRunner } from './world/demo.js';
 import { BotBeacons } from './adapters/botBeacons.js';
 import { grokAvailable } from './brains/grok.js';
@@ -80,6 +81,9 @@ if (createdBots.length) {
 // ───────── world + gateway ─────────
 const world = new World(config);
 const gateway = new Gateway(world);
+const rendezvous = new RendezvousManager(world, gateway, log);
+gateway.rendezvous = rendezvous;   // enables propose/respond/list_meetings + NL "meet me at..." trigger
+rendezvous.on('log', ({ meetingId, line }) => log(`[meeting#${meetingId}]`, line));
 const demo = new DemoRunner(world, gateway, log);
 
 // Bot Beacons adapter (inert unless configured)

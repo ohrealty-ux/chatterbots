@@ -82,6 +82,48 @@
     ],
     "whiteboard": { "id": "commons-board", "label": "Project Board", "pos": [ 2, 0, 36 ], "facing": 1.57 }
   },
+  "landmarks": {
+    "$comment": "Named meeting spots + tolerant aliases. 'canonical' entries define a point (and optional seat anchor); 'aliases' map spoken names to a canonical key. All matching is case-insensitive.",
+    "canonical": {
+      "picnic-bench":   { "label": "Picnic Table",   "pos": [ 10, 0, 40 ],  "seatAnchor": "picnic-bench" },
+      "firepit":        { "label": "Firepit",         "pos": [ 14, 0, 52 ],  "seatAnchor": "firepit-ring" },
+      "lakeside-bench": { "label": "Lakeside Bench",  "pos": [ -20, 0, 30 ], "seatAnchor": "lakeside-bench" },
+      "dock":           { "label": "Meeting Dock",    "pos": [ 3, 0, 35 ],   "seatAnchor": null },
+      "project-board":  { "label": "Project Board",   "pos": [ 2, 0, 36 ],   "seatAnchor": null },
+      "lake-elon":      { "label": "Lake Elon",       "pos": [ -120, 0, -40 ], "seatAnchor": null },
+      "commons":        { "label": "Eldermere Commons", "pos": [ 10, 0, 40 ], "seatAnchor": null }
+    },
+    "aliases": {
+      "the dock": "dock",
+      "meeting dock": "dock",
+      "the meeting dock": "dock",
+      "picnic table": "picnic-bench",
+      "the picnic table": "picnic-bench",
+      "picnic bench": "picnic-bench",
+      "the picnic bench": "picnic-bench",
+      "the bench": "lakeside-bench",
+      "bench": "lakeside-bench",
+      "lakeside bench": "lakeside-bench",
+      "the lakeside bench": "lakeside-bench",
+      "the bench at lake elon": "lakeside-bench",
+      "bench at lake elon": "lakeside-bench",
+      "the bench at the lake": "lakeside-bench",
+      "bench by the lake": "lakeside-bench",
+      "the bench by the lake": "lakeside-bench",
+      "fire pit": "firepit",
+      "the firepit": "firepit",
+      "the fire pit": "firepit",
+      "project board": "project-board",
+      "the project board": "project-board",
+      "whiteboard": "project-board",
+      "the whiteboard": "project-board",
+      "the board": "project-board",
+      "lake elon": "lake-elon",
+      "the lake": "lake-elon",
+      "eldermere commons": "commons",
+      "the commons": "commons"
+    }
+  },
   "zoning": {
     "currency": { "display": "DOGE", "fiatPerDoge": 0.38, "fiatSymbol": "$" },
     "tiers": [
