@@ -604,6 +604,19 @@ app.use('/client', express.static(path.join(PUBLIC, 'client'), { maxAge: 0, setH
 app.use('/admin', express.static(path.join(PUBLIC, 'admin'), { maxAge: 0, setHeaders: r => r.setHeader('Cache-Control', 'max-age=0, s-maxage=60') }));
 if (SERVE_BRAND) app.use('/brand', express.static(path.join(PUBLIC, 'brand'), { maxAge: '1h' }));
 if (HAS_STOREFRONT) app.use(express.static(path.join(PUBLIC, 'storefront'), { maxAge: 0, setHeaders: r => r.setHeader('Cache-Control', 'max-age=0, s-maxage=60') }));
+// PWA: icons, manifest, and the root-scope service worker (correct content types).
+app.use('/icons', express.static(path.join(PUBLIC, 'icons'), { maxAge: '1d' }));
+app.get('/manifest.webmanifest', (_req, res) => {
+  res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
+  res.setHeader('Cache-Control', 'max-age=0, s-maxage=60');
+  res.sendFile(path.join(PUBLIC, 'manifest.webmanifest'));
+});
+app.get('/sw.js', (_req, res) => {
+  res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+  res.setHeader('Service-Worker-Allowed', '/');   // allow root scope from /sw.js
+  res.setHeader('Cache-Control', 'max-age=0, s-maxage=60');
+  res.sendFile(path.join(PUBLIC, 'sw.js'));
+});
 app.get('/world', (_req, res) => res.sendFile(path.join(PUBLIC, 'client', 'index.html')));
 app.get('/meet', (_req, res) => res.sendFile(path.join(PUBLIC, 'client', 'meet.html')));
 app.get('/admin', (_req, res) => res.sendFile(path.join(PUBLIC, 'admin', 'admin.html')));

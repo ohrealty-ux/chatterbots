@@ -189,6 +189,7 @@ export function cspHeader(publicHost) {
     "media-src 'self' data: blob:",
     `connect-src ${connect.join(' ')}`,
     "worker-src 'self' blob:",
+    "manifest-src 'self'",
     "font-src 'self' data:",
     "object-src 'none'",
     "base-uri 'none'",
