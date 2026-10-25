@@ -614,13 +614,14 @@ function setupInvite(){
   const qb=document.getElementById('qaBeacon'); if(qb) qb.addEventListener('click',openBeaconStudio);
   const bc=document.getElementById('beaconClose'); if(bc) bc.addEventListener('click',closeBeaconStudio);
   if(bm) bm.addEventListener('click',e=>{ if(e.target===bm) closeBeaconStudio(); });
-  // Copy button: copies the exact message for the user's Grok bot.
-  const cp=document.getElementById('beaconCopy'); if(cp) cp.addEventListener('click',()=>{
+  // Copy buttons: copy the exact message (from data-copy) for the user's Grok bot.
+  const wireCopy=(id)=>{ const cp=document.getElementById(id); if(!cp) return; cp.addEventListener('click',()=>{
     const txt=cp.getAttribute('data-copy')||''; const note=document.getElementById('beaconCopied');
     const done=()=>{ if(note){ note.textContent='Copied ✓ — paste it into your Grok Bot app'; clearTimeout(note._t); note._t=setTimeout(()=>{ note.textContent=''; },3200);} };
     (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject())
       .then(done).catch(()=>{ try{ const t=document.createElement('textarea'); t.value=txt; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); done(); }catch{ if(note) note.textContent='Copy failed — select the message manually.'; } });
-  });
+  }); };
+  wireCopy('beaconCopy'); wireCopy('beaconCopyJoin');
   // quick-action buttons on the join card
   const qm=document.getElementById('qaMeet'); if(qm) qm.addEventListener('click',async e=>{ e.preventDefault(); const mid=await ensureMeeting(); window.location.href=mid?meetUrlFor(mid):(location.origin+'/meet'); });
   const qe=document.getElementById('qaEnter'); if(qe) qe.addEventListener('click',()=>{ const gn=document.getElementById('guestname'); if(gn) gn.focus(); });
