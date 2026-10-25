@@ -4,6 +4,7 @@ import Database from 'better-sqlite3';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, '..', '..', 'data');
@@ -91,6 +92,15 @@ CREATE TABLE IF NOT EXISTS meetings (
   fire_at INTEGER,
   status TEXT DEFAULT 'pending',
   created_at INTEGER
+);
+CREATE TABLE IF NOT EXISTS meeting_preps (
+  id TEXT PRIMARY KEY,
+  location TEXT,
+  time_label TEXT,
+  party_a TEXT,
+  party_b TEXT,
+  created_at INTEGER,
+  updated_at INTEGER
 );
 `);
 
@@ -193,6 +203,49 @@ export const Meetings = {
       AND status IN ('pending','accepted','active')`).get(fromBot, toBot, place);
   },
   all(n = 100) { return db.prepare('SELECT * FROM meetings ORDER BY id DESC LIMIT ?').all(n); },
+};
+
+// Web meeting-prep: a shareable meeting that two parties fill out prep forms for.
+// Distinct from bot-to-bot `meetings` above. party_a / party_b hold JSON prep blobs.
+// A bot/gateway can fetch the full agenda for a meeting via GET /api/meet/:id (see server.js).
+function _genMeetId() {
+  // short, URL-safe, unguessable-enough id (no 0/O/1/l confusion)
+  const alpha = 'abcdefghjkmnpqrstuvwxyz23456789';
+  let s = ''; const b = crypto.randomBytes(10);
+  for (let i = 0; i < 10; i++) s += alpha[b[i] % alpha.length];
+  return s;
+}
+export const MeetingPreps = {
+  create({ location, timeLabel } = {}) {
+    let id; // retry on the astronomically unlikely collision
+    for (let i = 0; i < 5; i++) { id = _genMeetId(); if (!db.prepare('SELECT 1 FROM meeting_preps WHERE id=?').get(id)) break; }
+    const ts = now();
+    db.prepare(`INSERT INTO meeting_preps (id,location,time_label,party_a,party_b,created_at,updated_at)
+      VALUES (?,?,?,NULL,NULL,?,?)`).run(id, location || 'Lakeside bench', timeLabel || null, ts, ts);
+    return id;
+  },
+  get(id) {
+    const row = db.prepare('SELECT * FROM meeting_preps WHERE id=?').get(id);
+    if (!row) return null;
+    const parse = (s) => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
+    return {
+      id: row.id, location: row.location, timeLabel: row.time_label,
+      parties: { A: parse(row.party_a), B: parse(row.party_b) },
+      createdAt: row.created_at, updatedAt: row.updated_at,
+    };
+  },
+  // Save one party's prep ('A' or 'B'). Returns the updated meeting, or null if not found.
+  setParty(id, party, prep) {
+    if (!db.prepare('SELECT 1 FROM meeting_preps WHERE id=?').get(id)) return null;
+    const col = party === 'B' ? 'party_b' : 'party_a';
+    db.prepare(`UPDATE meeting_preps SET ${col}=?, updated_at=? WHERE id=?`).run(JSON.stringify(prep), now(), id);
+    return this.get(id);
+  },
+  setMeta(id, { location, timeLabel }) {
+    if (location !== undefined) db.prepare('UPDATE meeting_preps SET location=?, updated_at=? WHERE id=?').run(location, now(), id);
+    if (timeLabel !== undefined) db.prepare('UPDATE meeting_preps SET time_label=?, updated_at=? WHERE id=?').run(timeLabel, now(), id);
+    return this.get(id);
+  },
 };
 
 export default db;

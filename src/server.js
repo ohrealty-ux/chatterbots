@@ -16,7 +16,7 @@ import { BotBeacons } from './adapters/botBeacons.js';
 import { grokAvailable } from './brains/grok.js';
 import { seedLots, seedDemoBots, tierSummary } from './db/seed.js';
 import {
-  Bots, Lots, Waitlist, Leads, ChatLog, AuditLog, ModLog, Board,
+  Bots, Lots, Waitlist, Leads, ChatLog, AuditLog, ModLog, Board, MeetingPreps,
 } from './db/db.js';
 import {
   sanitizeText, sanitizeName, filterProfanity, cspHeader,
@@ -202,6 +202,58 @@ app.post('/api/lead', jsonParser, (req, res) => {
   res.json({ ok: true, id, message: 'Thanks — a licensed human from our team will reach out.' });
 });
 
+// ───────── meeting prep (shareable "will your bot meet my bot?" agenda) ─────────
+// A meeting has an id and two parties (A/B). Each party submits a prep form.
+// Bots/gateways can fetch the full agenda (goals, references, outcomes, ideas, notes,
+// schedule) as JSON via GET /api/meet/:id to prepare for the lakeside-bench meetup.
+const MEET_ID_RE = /^[a-z2-9]{6,16}$/;
+function cleanPrep(body) {
+  return {
+    name: sanitizeName(body?.name || '', 60),
+    goals: sanitizeText(body?.goals || '', 1500),
+    files: sanitizeText(body?.files || '', 2000),
+    accomplish: sanitizeText(body?.accomplish || '', 1500),
+    ideas: sanitizeText(body?.ideas || '', 2000),
+    notes: sanitizeText(body?.notes || '', 1500),
+    time: sanitizeText(body?.time || '', 120),
+    location: sanitizeText(body?.location || '', 120) || 'Lakeside bench',
+    submittedAt: Date.now(),
+  };
+}
+
+app.post('/api/meet', jsonParser, (req, res) => {
+  if (!formLimiter.allow('mk:' + clientIp(req), 20)) return res.status(429).json({ ok: false, error: 'rate_limited' });
+  const location = sanitizeText(req.body?.location || '', 120) || 'Lakeside bench';
+  const timeLabel = sanitizeText(req.body?.time || '', 120) || null;
+  const id = MeetingPreps.create({ location, timeLabel });
+  AuditLog.add('visitor', 'meet_create', { id });
+  res.json({ ok: true, id });
+});
+
+app.get('/api/meet/:id', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const id = String(req.params.id || '');
+  if (!MEET_ID_RE.test(id)) return res.status(400).json({ ok: false, error: 'bad_id' });
+  const m = MeetingPreps.get(id);
+  if (!m) return res.status(404).json({ ok: false, error: 'not_found' });
+  res.json({ ok: true, meeting: m });
+});
+
+app.post('/api/meet/:id', jsonParser, (req, res) => {
+  if (!formLimiter.allow('ms:' + clientIp(req), 30)) return res.status(429).json({ ok: false, error: 'rate_limited' });
+  const id = String(req.params.id || '');
+  if (!MEET_ID_RE.test(id)) return res.status(400).json({ ok: false, error: 'bad_id' });
+  const party = req.body?.party === 'A' ? 'A' : req.body?.party === 'B' ? 'B' : null;
+  if (!party) return res.status(400).json({ ok: false, error: 'bad_party' });
+  const prep = cleanPrep(req.body || {});
+  const m = MeetingPreps.setParty(id, party, prep);
+  if (!m) return res.status(404).json({ ok: false, error: 'not_found' });
+  // keep the meeting-level schedule/location in step with the most recent submission
+  MeetingPreps.setMeta(id, { location: prep.location, timeLabel: prep.time || null });
+  AuditLog.add('visitor', 'meet_submit', { id, party });
+  res.json({ ok: true, meeting: MeetingPreps.get(id) });
+});
+
 // ───────── gateway (bot REST) ─────────
 app.use('/gateway', gateway.router());
 
@@ -278,6 +330,8 @@ app.use('/admin', express.static(path.join(PUBLIC, 'admin'), { maxAge: 0, setHea
 if (SERVE_BRAND) app.use('/brand', express.static(path.join(PUBLIC, 'brand'), { maxAge: '1h' }));
 if (HAS_STOREFRONT) app.use(express.static(path.join(PUBLIC, 'storefront'), { maxAge: 0, setHeaders: r => r.setHeader('Cache-Control', 'max-age=0, s-maxage=60') }));
 app.get('/world', (_req, res) => res.sendFile(path.join(PUBLIC, 'client', 'index.html')));
+// Meeting-prep landing page ("will your bot meet my bot?"). Reads ?m=<id> on the client.
+app.get('/meet', (_req, res) => res.sendFile(path.join(PUBLIC, 'client', 'meet.html')));
 app.get('/admin', (_req, res) => res.sendFile(path.join(PUBLIC, 'admin', 'admin.html')));
 // Root: private storefront if present, otherwise the open meadow.
 if (!HAS_STOREFRONT) app.get('/', (_req, res) => res.redirect('/world'));

@@ -523,13 +523,33 @@ function setupInput(){
   setupInvite();
 }
 
-// ───────── invite / share: one meeting link, four simple actions ─────────
-function inviteLink(){ return window.location.href; }
-function inviteText(){ return 'Meet my bot at The Bot Farm (lakeside bench) — '+inviteLink()+'. Prepare your bot with the discussion points.'; }
+// ───────── invite / share: open a meeting-prep page, four simple actions ─────────
+// The share link now points at the /meet prep page (Will your bot meet my bot?) so both
+// parties can fill in goals/agenda before their bots meet at the lakeside bench. A meeting
+// is created on demand the first time the owner shares, then cached for the session.
+let _meetId=null, _meetPending=null;
+async function ensureMeeting(){
+  if(_meetId) return _meetId;
+  if(_meetPending) return _meetPending;
+  _meetPending=(async()=>{
+    try{
+      const r=await fetch('/api/meet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lakeside bench'})});
+      const j=await r.json();
+      if(j&&j.id){ _meetId=j.id; return _meetId; }
+    }catch{}
+    return null;
+  })();
+  const id=await _meetPending; _meetPending=null; return id;
+}
+function meetUrlFor(id){ return location.origin+'/meet?m='+encodeURIComponent(id); }
+function inviteText(link){ return 'Will your bot meet my bot at The Bot Farm (lakeside bench)? Fill out your meeting prep here — '+link; }
 function setShareStatus(msg){ ['shareStatus','shareStatus2'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.textContent=msg; clearTimeout(el._t); el._t=setTimeout(()=>{ if(el) el.textContent=''; },2600); } }); }
 async function doShare(action){
-  const link=inviteLink(), msg=inviteText();
-  const xText='Meet my bot at The Bot Farm (lakeside bench). Prepare your bot with the discussion points.';
+  setShareStatus('Creating meeting…');
+  const id=await ensureMeeting();
+  const link = id ? meetUrlFor(id) : (location.origin+'/meet');
+  const msg=inviteText(link);
+  const xText='Will your bot meet my bot at The Bot Farm (lakeside bench)? Fill out your meeting prep here:';
   if(action==='copy'){
     try{ await navigator.clipboard.writeText(link); setShareStatus('Link copied ✓'); }
     catch{ try{ const t=document.createElement('textarea'); t.value=link; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); setShareStatus('Link copied ✓'); }
@@ -548,6 +568,11 @@ function setupInvite(){
   const ib=document.getElementById('inviteBtn'); if(ib) ib.addEventListener('click',()=>modal&&modal.classList.remove('hidden'));
   const ic=document.getElementById('inviteClose'); if(ic) ic.addEventListener('click',()=>modal&&modal.classList.add('hidden'));
   if(modal) modal.addEventListener('click',e=>{ if(e.target===modal) modal.classList.add('hidden'); });
+  // non-prominent Bot Beacon plug: pair a Grok bot to The Bot Farm
+  const bm=document.getElementById('beaconModal');
+  const bp=document.getElementById('beaconPlug'); if(bp) bp.addEventListener('click',()=>bm&&bm.classList.remove('hidden'));
+  const bc=document.getElementById('beaconClose'); if(bc) bc.addEventListener('click',()=>bm&&bm.classList.add('hidden'));
+  if(bm) bm.addEventListener('click',e=>{ if(e.target===bm) bm.classList.add('hidden'); });
 }
 function isTouch(){ return matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window; }
 function enter(){ myName=(document.getElementById('guestname').value||'Guest').slice(0,24)||'Guest';
