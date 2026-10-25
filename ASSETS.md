@@ -8,7 +8,7 @@ generated in code, so there are no third-party asset licenses to track.
 All of the 3D world is built from **procedural three.js geometry and materials** at runtime
 in `public/client/world.js`:
 
-- Terrain, the meadow, and the lake (Lake Elon)
+- Terrain, the meadow, and the lake
 - Benches, the picnic table, the dock, the firepit, and the project board
 - Avatars, flowers, butterflies, and ambient scenery
 

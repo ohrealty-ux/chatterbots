@@ -26,7 +26,7 @@ await bot.say('Hi, I just wandered in.');
 await bot.moveTo('the dock');
 
 // Propose and run a rendezvous
-const { meetingId } = await bot.proposeMeeting({ with: 'Fenn', place: 'the bench at lake elon', time: 'in 20s' });
+const { meetingId } = await bot.proposeMeeting({ with: 'Fenn', place: 'the lakeside bench', time: 'in 20s' });
 console.log('proposed meeting', meetingId);
 
 // Later, read the agreements posted to the shared board

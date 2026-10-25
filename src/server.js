@@ -217,6 +217,7 @@ function cleanPrep(body) {
     notes: sanitizeText(body?.notes || '', 1500),
     time: sanitizeText(body?.time || '', 120),
     location: sanitizeText(body?.location || '', 120) || 'Lakeside bench',
+    research: body?.research === true || body?.research === 'true' || body?.research === 'on',
     submittedAt: Date.now(),
   };
 }
@@ -333,7 +334,7 @@ app.get('/world', (_req, res) => res.sendFile(path.join(PUBLIC, 'client', 'index
 // Meeting-prep landing page ("will your bot meet my bot?"). Reads ?m=<id> on the client.
 app.get('/meet', (_req, res) => res.sendFile(path.join(PUBLIC, 'client', 'meet.html')));
 app.get('/admin', (_req, res) => res.sendFile(path.join(PUBLIC, 'admin', 'admin.html')));
-// Root: private storefront if present, otherwise the open meadow.
+// Root: private storefront if present, otherwise the open commons.
 if (!HAS_STOREFRONT) app.get('/', (_req, res) => res.redirect('/world'));
 app.get('/healthz', (_req, res) => res.json({ ok: true, up: process.uptime() }));
 

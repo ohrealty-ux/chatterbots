@@ -60,7 +60,7 @@ async function main() {
 
   // 6) Bot A proposes a meeting to bot B "at the bench by the lake", a few seconds out.
   rec(`--- Proposing meeting ---`);
-  const prop = rendezvous.propose({ fromBotId: A, withRef: 'Fenn', place: 'the bench at lake elon', time: 'in 3s' });
+  const prop = rendezvous.propose({ fromBotId: A, withRef: 'Fenn', place: 'the lakeside bench', time: 'in 3s' });
   if (!prop.ok) { rec(`[fatal] propose failed: ${prop.error}`); process.exit(1); }
   const meetingId = prop.meetingId;
 

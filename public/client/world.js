@@ -15,7 +15,7 @@ function noise2(x,y){ const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;
   return a*(1-u)*(1-v)+b*u*(1-v)+c*(1-u)*v+d*u*v; }
 function fbm(x,y){ let t=0,amp=0.5,f=1; for(let i=0;i<4;i++){ t+=amp*noise2(x*f,y*f); f*=2; amp*=0.5;} return t; }
 
-// terrain height with carved Lake Elon basin + paths
+// terrain height with carved lake basin + paths
 let LAKE={center:[0,0,0],radius:100,depth:6};
 function terrainHeight(x,z){
   let h=fbm(x*0.006+10,z*0.006-5)*18 - 6;
@@ -225,7 +225,7 @@ function treeBillboard(){ if(!_bbTex){ const c=document.createElement('canvas');
   _bbTex=new THREE.CanvasTexture(c);} return new THREE.SpriteMaterial({map:_bbTex,transparent:true}); }
 
 
-// ───────── Lake Elon water (scrolling ripples, reflection tint, depth, foam) ─────────
+// ───────── lake water (scrolling ripples, reflection tint, depth, foam) ─────────
 let waterMat;
 function buildWater(){
   const geo=new THREE.CircleGeometry(LAKE.radius+2,72); geo.rotateX(-Math.PI/2);
@@ -492,8 +492,7 @@ function applyState(snap){
   }
   for(const [id,e] of remote){ if(!seen.has(id)){ if(e.mesh) scene.remove(e.mesh); if(e.plate) e.plate.remove(); remote.delete(id); } }
 }
-function onChat(msg){ addChatLine(msg.name,msg.kind,msg.text); if(msg.id!==myId) showBubble(msg.id,msg.text);
-  if(msg.text.startsWith('[board]')) refreshBoard(); }
+function onChat(msg){ addChatLine(msg.name,msg.kind,msg.text); if(msg.id!==myId) showBubble(msg.id,msg.text); }
 function addChatLine(name,kind,text){ const log=document.getElementById('chatlog'); const d=document.createElement('div');
   d.className='line'+(kind==='bot'?' bot':''); const n=document.createElement('span'); n.className='nm'; n.textContent=name+': ';
   const t=document.createElement('span'); t.textContent=text; d.appendChild(n); d.appendChild(t); log.appendChild(d);
@@ -513,7 +512,6 @@ function setupInput(){
     const t=i.value.trim(); if(t&&ws&&ws.readyState===1){ ws.send(JSON.stringify({type:'say',text:t})); } i.value=''; i.blur(); });
   document.getElementById('muteBtn').addEventListener('click',toggleMute);
   document.getElementById('helpBtn').addEventListener('click',()=>alert('WASD/arrows move · drag mouse (click to lock) to look · click the bench to sit · Space to stand · click a bot to greet · type to chat with people nearby. Phones: use the stick + drag to look.'));
-  document.getElementById('boardToggle').addEventListener('click',()=>{ const p=document.getElementById('boardpanel'); p.classList.toggle('hidden'); if(!p.classList.contains('hidden')) refreshBoard(); });
   // touch look + joystick
   if(isTouch()){ document.getElementById('stick').classList.remove('hidden'); setupTouch(); }
   // join
@@ -564,6 +562,10 @@ async function doShare(action){
 }
 function setupInvite(){
   document.querySelectorAll('.share-btn').forEach(b=>b.addEventListener('click',()=>doShare(b.dataset.share)));
+  // "Start meeting prep" CTAs: create a meeting id, then open the /meet intake page for it
+  ['intakeCta','intakeCta2'].forEach(id=>{ const c=document.getElementById(id); if(c) c.addEventListener('click',async e=>{
+    e.preventDefault(); setShareStatus('Opening meeting prep…');
+    const mid=await ensureMeeting(); window.location.href = mid ? meetUrlFor(mid) : (location.origin+'/meet'); }); });
   const modal=document.getElementById('invitemodal');
   const ib=document.getElementById('inviteBtn'); if(ib) ib.addEventListener('click',()=>modal&&modal.classList.remove('hidden'));
   const ic=document.getElementById('inviteClose'); if(ic) ic.addEventListener('click',()=>modal&&modal.classList.add('hidden'));
@@ -600,10 +602,6 @@ function handlePick(e){ if(document.getElementById('join').classList.contains('h
   const hits=raycaster.intersectObjects(meshes,true); if(hits.length){ let o=hits[0].object; while(o&&!o.userData.data) o=o.parent; if(o){ const t=document.getElementById('talktip'); t.textContent=`Say hi to ${o.userData.data.name} — type in chat; they hear you if you're nearby.`; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),3500);} }
 }
 function sendStand(){ if(ws) ws.send(JSON.stringify({type:'stand'})); }
-
-// ───────── board ─────────
-async function refreshBoard(){ try{ const r=await fetch('/api/board/commons-board'); const j=await r.json(); const el=document.getElementById('boardposts'); el.textContent='';
-  (j.posts||[]).forEach(p=>{ const d=document.createElement('div'); const a=document.createElement('span'); a.className='auth'; a.textContent=p.author+': '; const t=document.createElement('span'); t.textContent=p.text; d.appendChild(a); d.appendChild(t); el.appendChild(d); }); }catch{} }
 
 // ───────── time-of-day update ─────────
 function updateTOD(phase){ const s=todSample(phase);

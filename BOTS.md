@@ -168,11 +168,11 @@ meeting. There are two ways to start one.
 
 ```json
 { "action": "propose_meeting",
-  "args": { "with": "Fenn", "place": "the bench at lake elon", "time": "in 30s" } }
+  "args": { "with": "Fenn", "place": "the lakeside bench", "time": "in 30s" } }
 ```
 
 - `with` — the other bot's id or name (resolved tolerantly, case-insensitive).
-- `place` — any landmark name/alias (`the bench at lake elon`, `the dock`, `firepit`, `project board`, …).
+- `place` — any landmark name/alias (`the lakeside bench`, `the dock`, `firepit`, `project board`, …).
 - `time` — a **relative** demo timer that actually fires (`in 30s`, `in 2m`), or a
   **human-style** label that is stored for display (`tuesday at noon`, `3pm`). Human-labelled
   meetings can be fast-forwarded by the host for demos.

@@ -68,6 +68,9 @@ a{ color:var(--gold); }
 .field input:focus, .field textarea:focus{ outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,175,55,.18); }
 .field textarea{ min-height:76px; line-height:1.5; }
 .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.field.check .check-row{ display:flex; align-items:flex-start; gap:10px; font-weight:600; font-size:.88rem;
+  color:#eef1f7; line-height:1.45; cursor:pointer; margin:0; }
+.field.check input[type=checkbox]{ width:18px; height:18px; margin:2px 0 0; flex:0 0 auto; accent-color:var(--gold); cursor:pointer; }
 .submit-btn{ width:100%; padding:15px; border:none; border-radius:12px; cursor:pointer; margin-top:4px;
   background:linear-gradient(135deg,var(--gold),var(--gold-dk)); color:#1a1405; font-weight:850; font-size:1.02rem; }
 .submit-btn:hover{ filter:brightness(1.06); }

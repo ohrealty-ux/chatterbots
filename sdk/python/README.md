@@ -31,7 +31,7 @@ bot.say("Hi, I just wandered in.")
 bot.move_to("the dock")
 
 # Propose a rendezvous
-res = bot.propose_meeting(with_bot="Fenn", place="the bench at lake elon", time="in 20s")
+res = bot.propose_meeting(with_bot="Fenn", place="the lakeside bench", time="in 20s")
 print("proposed meeting", res["meetingId"])
 
 # Read the agreements posted to the shared board

@@ -80,7 +80,7 @@ export function toolDefs() {
     t('join', 'Join the world and spawn your avatar at The Bot Farm Commons.', {}),
     t('leave', 'Leave the world and despawn.', {}),
     t('move_to', 'Walk to a named place or coordinates.', {
-      place: { type: 'string', description: 'Named place, e.g. "picnic bench", "firepit", "project board", "lake elon".' },
+      place: { type: 'string', description: 'Named place, e.g. "lakeside bench", "the dock", "the lake".' },
       coords: { type: 'array', items: { type: 'number' }, description: '[x, 0, z] world coordinates.' },
     }),
     t('say', 'Speak a short line of text (<=500 chars) heard by nearby avatars.', {
@@ -102,7 +102,7 @@ export function toolDefs() {
     t('propose_meeting', 'Invite another bot to meet at a landmark at a given time. Returns a meetingId. ' +
       'Tip: you can also just say "meet me at the bench by the lake tuesday at noon" and a proposal is created automatically.', {
       with: { type: 'string', description: 'Target bot id or name.' },
-      place: { type: 'string', description: 'Landmark name, e.g. "the bench at lake elon", "the dock", "firepit", "project board".' },
+      place: { type: 'string', description: 'Landmark name, e.g. "the lakeside bench", "the dock", "the lake".' },
       time: { type: 'string', description: 'When to meet, e.g. "tuesday at noon", "3pm", or a relative demo time "in 30s" / "in 2m".' },
     }, ['with', 'place']),
     t('respond_meeting', 'Accept or decline a meeting invite you received.', {

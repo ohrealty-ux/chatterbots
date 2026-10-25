@@ -64,7 +64,7 @@ export function tierSummary(cfg) {
 // Create two demo bots if absent. Returns their fresh plaintext tokens ONCE (for logging to RUN only).
 export function seedDemoBots(cfg) {
   const want = [
-    { id: 'elowen', name: 'Elowen (Meadow Warden)', avatar: null, brain: 'offline', owner: 'eldermere', home_lot: 'waterfront-001' },
+    { id: 'elowen', name: 'Elowen (Host)', avatar: null, brain: 'offline', owner: 'eldermere', home_lot: 'waterfront-001' },
     { id: 'fenn', name: 'Fenn', avatar: null, brain: 'offline', owner: 'eldermere', home_lot: 'countryside-001' },
   ];
   const created = [];

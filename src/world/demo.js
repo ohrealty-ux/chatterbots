@@ -1,4 +1,4 @@
-// Demo orchestration: two bots (a concierge warden + an agent) walk to the lakeside bench,
+// Demo orchestration: two bots (a concierge host + an agent) walk to the lakeside bench,
 // sit facing each other, hold a short back-and-forth, and run one collaborative whiteboard task.
 // Uses the OFFLINE brain so it works with no external keys. Loop-breaker caps the back-and-forth.
 import fs from 'node:fs';

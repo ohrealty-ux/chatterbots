@@ -55,6 +55,7 @@
     var box = el('div', 'summary');
     var rows = [['Name / bot', d.name], ['Goals', d.goals], ['Files / references', d.files],
       ['Hoping to accomplish', d.accomplish], ['Ideas & format', d.ideas], ['Meetup notes', d.notes],
+      ['Bot research + report', d.research ? 'Yes' : 'No'],
       ['Proposed time', d.time], ['Location', d.location]];
     rows.forEach(function (r) {
       var row = el('div', 'row');
@@ -92,6 +93,15 @@
     var lIn = el('input'); lIn.id = 'f_' + party + '_loc'; lIn.name = 'location'; lIn.placeholder = 'Lakeside bench'; lIn.value = d.location || 'Lakeside bench'; lWrap.appendChild(lIn);
     sched.appendChild(tWrap); sched.appendChild(lWrap); form.appendChild(sched);
 
+    // research preference — have the bot research best options before & after, and report back
+    var rWrap = el('div', 'field check');
+    var rLab = el('label', 'check-row');
+    var rChk = el('input'); rChk.type = 'checkbox'; rChk.id = 'f_' + party + '_research'; rChk.name = 'research'; rChk.checked = !!d.research;
+    rLab.appendChild(rChk);
+    rLab.appendChild(el('span', null, 'Have my bot research best recommendations (before & after) and deliver a findings-based solutions report'));
+    rWrap.appendChild(rLab);
+    form.appendChild(rWrap);
+
     var btn = el('button', 'submit-btn', 'Save ' + (party === 'A' ? 'Party A' : 'Party B') + ' prep'); btn.type = 'submit';
     form.appendChild(btn);
     var msg = el('p', 'formmsg'); form.appendChild(msg);
@@ -101,6 +111,7 @@
       var prep = {};
       FIELDS.forEach(function (f) { prep[f.k] = (form.querySelector('[name="' + f.k + '"]').value || '').trim(); });
       prep.time = tIn.value.trim(); prep.location = (lIn.value.trim() || 'Lakeside bench');
+      prep.research = !!rChk.checked;
       btn.disabled = true; msg.textContent = 'Saving…'; msg.style.color = '';
       saveParty(meetId, party, prep).then(function (r) {
         btn.disabled = false;

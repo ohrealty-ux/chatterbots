@@ -70,7 +70,7 @@
     "canonical": {
       "lakeside-bench": { "label": "Lakeside Bench",  "pos": [ 15, 0, 40 ], "seatAnchor": "lakeside-bench" },
       "dock":           { "label": "Meeting Dock",    "pos": [ 8, 0, 40 ],   "seatAnchor": null },
-      "lake-elon":      { "label": "the lake",        "pos": [ -120, 0, -40 ], "seatAnchor": null },
+      "lake":           { "label": "the lake",        "pos": [ -120, 0, -40 ], "seatAnchor": null },
       "commons":        { "label": "The Bot Farm Commons", "pos": [ 10, 0, 40 ], "seatAnchor": null }
     },
     "aliases": {
@@ -88,8 +88,8 @@
       "the shore": "lakeside-bench",
       "lakeshore": "lakeside-bench",
       "the lakeshore": "lakeside-bench",
-      "lake": "lake-elon",
-      "the lake": "lake-elon",
+      "lake": "lake",
+      "the lake": "lake",
       "the bot farm commons": "commons",
       "the commons": "commons"
     }
@@ -135,7 +135,7 @@
   },
   "botDefaults": {
     "maxSpeed": 6.0,
-    "loopBreaker": { "maxTurns": 8, "maxSeconds": 120 },
+    "loopBreaker": { "maxTurns": 4, "maxSeconds": 60 },
     "dailyBrainTokenBudget": 60000,
     "rateLimit": { "actionsPerSec": 8, "msgsPerMin": 20, "maxChars": 500 }
   },

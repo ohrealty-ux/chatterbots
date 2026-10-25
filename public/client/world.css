@@ -6,9 +6,10 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0b1026; color:#ff
 .hidden{ display:none !important; }
 
 .overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
-  background:radial-gradient(ellipse at 50% 30%, rgba(40,30,60,.5), rgba(8,10,22,.92)); z-index:20; padding:20px; }
+  background:radial-gradient(ellipse at 50% 30%, rgba(40,30,60,.5), rgba(8,10,22,.92)); z-index:20;
+  padding:20px; overflow-y:auto; }
 .join-card{ background:var(--panel); backdrop-filter:blur(10px); border:1px solid rgba(212,175,55,.35);
-  border-radius:18px; padding:30px 28px; max-width:420px; width:100%; text-align:center;
+  border-radius:18px; padding:26px 26px; max-width:420px; width:100%; text-align:center; margin:auto;
   box-shadow:0 20px 60px rgba(0,0,0,.5); }
 .join-card .wordmark{ width:220px; max-width:80%; margin-bottom:8px; }
 .join-card h1{ font-size:1.5rem; margin:.3rem 0; letter-spacing:.5px; }
@@ -32,6 +33,12 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0b1026; color:#ff
 .btn{ cursor:pointer; }
 #topbar .btn:hover{ border-color:var(--gold); }
 #quality{ margin-left:auto; }
+/* Prominent HUD "Invite to Meet" button — stands out from the plain pills */
+.invite-cta{ background:linear-gradient(135deg,var(--gold),#b8912e); color:#1a1405; border:none;
+  border-radius:999px; padding:7px 16px; font-size:.86rem; font-weight:800; cursor:pointer;
+  box-shadow:0 2px 10px rgba(212,175,55,.45); letter-spacing:.2px; white-space:nowrap; }
+.invite-cta:hover{ filter:brightness(1.08); }
+.invite-cta:active{ transform:translateY(1px); }
 
 #chatpanel{ position:fixed; left:10px; bottom:10px; width:min(380px,70vw); z-index:12; }
 #chatlog{ max-height:30vh; overflow-y:auto; display:flex; flex-direction:column; gap:4px; margin-bottom:6px; }
@@ -43,15 +50,6 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0b1026; color:#ff
 #chatform input{ flex:1; padding:10px 12px; border-radius:9px; border:1px solid rgba(255,255,255,.18);
   background:var(--panel); color:#fff; font-size:.9rem; }
 #chatform button{ padding:0 14px; border:none; border-radius:9px; background:var(--gold); color:#1a1405; font-weight:700; cursor:pointer; }
-
-#boardToggle{ position:fixed; right:10px; bottom:10px; z-index:12; }
-.corner-btn{ background:var(--panel); border:1px solid rgba(255,255,255,.14); color:#fff; border-radius:10px;
-  padding:9px 12px; cursor:pointer; font-size:.85rem; }
-#boardpanel{ position:fixed; right:10px; bottom:56px; width:min(320px,80vw); max-height:50vh; overflow-y:auto;
-  background:var(--panel); border:1px solid rgba(212,175,55,.35); border-radius:12px; padding:12px 14px; z-index:12; }
-#boardpanel h3{ margin:0 0 8px; color:var(--gold); font-size:.95rem; }
-#boardposts div{ font-size:.8rem; padding:4px 0; border-bottom:1px solid rgba(255,255,255,.08); }
-#boardposts .auth{ color:var(--gold); font-weight:600; }
 
 #nameplates{ position:fixed; inset:0; pointer-events:none; z-index:8; overflow:hidden; }
 .plate{ position:absolute; transform:translate(-50%,-100%); text-align:center; pointer-events:none;
@@ -87,8 +85,24 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0b1026; color:#ff
 .invite-block{ background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22);
   border-radius:14px; padding:14px 14px 12px; margin:6px 0 16px; }
 .invite-prompt{ font-size:1rem; font-weight:800; color:#ffffff; margin:0 0 10px; text-align:center; letter-spacing:.2px; }
+
+/* "Before you meet" intake guidance */
+.intake-guide{ background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.14); border-radius:11px;
+  padding:11px 14px; margin:0 0 12px; text-align:left; }
+.intake-title{ margin:0 0 6px; font-size:.86rem; font-weight:800; color:var(--gold); }
+.intake-list{ margin:0; padding-left:1.15em; }
+.intake-list li{ font-size:.82rem; color:#eef1f6; line-height:1.5; }
+
+/* Primary call-to-action: open the /meet intake page */
+.primary-cta{ display:block; width:100%; box-sizing:border-box; text-align:center; text-decoration:none;
+  padding:15px 12px; margin:0 0 12px; border:none; border-radius:12px; cursor:pointer;
+  background:linear-gradient(135deg,var(--gold),#b8912e); color:#1a1405; font-weight:800; font-size:1rem;
+  box-shadow:0 4px 14px rgba(212,175,55,.35); transition:transform .06s ease, filter .12s ease; }
+.primary-cta:hover{ filter:brightness(1.07); }
+.primary-cta:active{ transform:translateY(1px); }
+
 .share-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.share-btn{ width:100%; padding:14px 10px; border:none; border-radius:11px; cursor:pointer;
+.share-btn, .join-card .share-btn{ width:100%; padding:14px 10px; border:none; border-radius:11px; cursor:pointer;
   background:#ffffff; color:#14181f; font-weight:800; font-size:.95rem; line-height:1;
   box-shadow:0 2px 8px rgba(0,0,0,.35); transition:transform .06s ease, filter .12s ease; }
 .share-btn:hover{ filter:brightness(.94); }
@@ -98,7 +112,7 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0b1026; color:#ff
 /* Invite modal — reopened from the HUD */
 #invitemodal{ z-index:30; }
 .invite-card{ background:#141926; border:1px solid rgba(255,255,255,.22); border-radius:18px;
-  padding:26px 24px 20px; max-width:420px; width:100%; text-align:center; box-shadow:0 24px 70px rgba(0,0,0,.6); }
+  padding:26px 24px 20px; max-width:420px; width:100%; text-align:center; margin:auto; box-shadow:0 24px 70px rgba(0,0,0,.6); }
 .invite-card h2{ font-size:1.15rem; font-weight:800; color:#ffffff; margin:0 0 16px; letter-spacing:.2px; }
 .invite-card .close-btn{ margin-top:16px; width:100%; padding:13px; border:none; border-radius:11px; cursor:pointer;
   background:#2b3344; color:#ffffff; font-weight:800; font-size:.95rem; }
