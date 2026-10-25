@@ -10,6 +10,38 @@ const shortText = (max) => z.string().max(max);
 const name = z.string().min(1).max(60)
   .refine(v => !RESERVED_NAME_RE.test(v), { message: 'reserved_name' });
 
+// A money amount: numbers only, 0 to 1,000,000,000, at most 2 decimal places.
+// Empty string / null -> undefined (field left blank). Anything non-numeric or out of
+// range is rejected. Display-only — there is NO wallet or payment anywhere in the app.
+const moneyAmount = z.union([
+  z.literal('').transform(() => undefined),   // blank field -> left unset
+  z.coerce.number()
+    .refine(Number.isFinite, { message: 'not_a_number' })
+    .refine(n => n >= 0 && n <= 1e9, { message: 'out_of_range' })
+    .refine(n => Math.abs(n * 100 - Math.round(n * 100)) < 1e-9, { message: 'too_many_decimals' }),
+]).optional();
+
+// Negotiation / money intake for a meeting party. Strict keys. The walk-away number
+// (amountWalkaway) and the owner-approval threshold (askAbove) are PRIVATE: they are never
+// placed in any shared/public payload and never revealed to the other party's bot.
+export const DEAL_TYPES = ['buy_sell', 'hire', 'partnership', 'price_service', 'other'];
+export const MONEY_UNITS = ['total', 'month', 'hour', 'percent'];
+export const PAYMENT_STYLES = ['all_at_once', 'monthly', 'milestones', 'percent_commission', 'split', 'other'];
+export const TRADE_LEVERS = ['speed', 'scope', 'term', 'timing', 'exclusivity'];
+export const REVEAL_OPTS = ['nothing', 'opening', 'both'];
+const money = z.object({
+  dealType: z.enum(DEAL_TYPES).optional(),
+  unit: z.enum(MONEY_UNITS).optional(),          // how the amounts are measured (total/month/hour/percent)
+  amountAnchor: moneyAmount,     // opening offer (revealable)
+  amountIdeal: moneyAmount,      // ideal number (revealed only if reveal='both')
+  amountWalkaway: moneyAmount,   // walk-away number — NEVER revealed
+  askAbove: moneyAmount,         // stop & ask owner before agreeing above this — PRIVATE
+  paymentStyle: z.enum(PAYMENT_STYLES).optional(),
+  deadline: shortText(40).optional(),
+  trades: z.array(z.enum(TRADE_LEVERS)).max(10).optional(),
+  reveal: z.enum(REVEAL_OPTS).optional(),
+}).strict();
+
 export const schemas = {
   waitlist: z.object({
     email: z.string().max(120),
@@ -46,6 +78,7 @@ export const schemas = {
     location: shortText(120).optional(),
     research: z.union([z.boolean(), z.enum(['true', 'false', 'on'])]).optional(),
     beaconNotify: z.union([z.boolean(), z.enum(['true', 'false', 'on'])]).optional(),
+    money: money.optional(),
   }).strict(),
 
   join: z.object({

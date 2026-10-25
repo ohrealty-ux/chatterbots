@@ -169,3 +169,11 @@ a{ color:var(--gold); }
 .bs-trouble ul strong{ color:#f3d473; }
 .bs-fineprint{ font-size:.8rem; color:#c7cad3; margin:6px 0 0; }
 .bs-fineprint a{ color:#9fd0ff; text-decoration:none; border-bottom:1px solid rgba(159,208,255,.4); }
+
+/* Money (private to you) section — negotiation intake shown when the office is chosen. */
+.money-sec { border: 1px solid rgba(255,255,255,0.14); border-radius: 12px; padding: 14px 16px; margin-top: 8px; background: rgba(255,255,255,0.03); }
+.money-sec .money-title { margin: 0 0 2px; font-size: 1.02rem; }
+.money-sec .field { margin-top: 10px; }
+.money-sec .trade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; }
+.money-sec .trade-grid .check-row { display: flex; align-items: center; gap: 8px; }
+.money-note { margin: 12px 0 0; font-size: 0.85rem; opacity: 0.85; }
