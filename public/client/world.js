@@ -555,8 +555,9 @@ function setupInput(){
   // join
   document.getElementById('enterBtn').addEventListener('click',enter);
   document.getElementById('guestname').addEventListener('keydown',e=>{ if(e.key==='Enter') enter(); });
-  // invite / share flow
-  setupInvite();
+  // NOTE: setupInvite() is wired EARLY (at module load), not here — see bottom of file —
+  // so the join-card buttons (Beacon Studio, quick actions, share) respond immediately,
+  // before the heavy 3D world finishes building.
 }
 
 // ───────── invite / share: open a meeting-prep page, four simple actions ─────────
@@ -754,4 +755,7 @@ function updatePlates(){ for(const e of remote.values()){ if(!e.mesh||!e.plate) 
   const d=camera.position.distanceTo(e.mesh.position); e.plate.style.opacity=d>60?0:1; } }
 function stepDown(){ quality='medium'; qualityDiv.textContent='MEDIUM (auto)'; renderer.setPixelRatio(Math.min(devicePixelRatio,1.25)); if(grassMesh) grassMesh.count=Math.min(grassCount,12000); lowFps=0; }
 
+// Wire the join-card UI immediately (DOM is already parsed for a deferred module), so the
+// Beacon Studio, quick-action and share buttons work before the 3D world finishes loading.
+try { setupInvite(); } catch (e) { /* non-fatal: boot() still runs the world */ }
 boot();
