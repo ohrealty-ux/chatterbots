@@ -133,6 +133,7 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0b1026; color:#ff
   background:#1b2231; color:#ffffff; font-weight:700; font-size:.82rem; line-height:1.2; min-height:44px; }
 .quick-btn:hover{ border-color:var(--gold); color:#ffffff; filter:brightness(1.1); }
 .quick-btn:active{ transform:translateY(1px); }
+.quick-btn-lg{ font-size:1.12rem; padding:14px 10px; min-height:52px; }
 @media(max-width:460px){ .quick-row{ grid-template-columns:1fr; } }
 
 /* ───────── Beacon Studio panel (high-contrast, friendly) ───────── */
@@ -149,7 +150,7 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0b1026; color:#ff
   box-shadow:0 0 10px 3px rgba(255,255,255,.85), 0 0 26px 10px rgba(255,255,255,.5);
   animation:bsGlow 1.8s ease-in-out infinite; }
 .bs-orb-img{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-  height:40px; width:auto; max-width:40px; pointer-events:none;
+  width:46px; height:46px; object-fit:cover; border-radius:50%; pointer-events:none;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
 @keyframes bsGlow{ 0%,100%{ box-shadow:0 0 8px 2px rgba(255,255,255,.7), 0 0 20px 8px rgba(255,255,255,.4); }
   50%{ box-shadow:0 0 14px 5px rgba(255,255,255,1), 0 0 34px 14px rgba(255,255,255,.65); } }
