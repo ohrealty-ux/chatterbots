@@ -614,7 +614,9 @@ app.get('/manifest.webmanifest', (_req, res) => {
 app.get('/sw.js', (_req, res) => {
   res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
   res.setHeader('Service-Worker-Allowed', '/');   // allow root scope from /sw.js
-  res.setHeader('Cache-Control', 'max-age=0, s-maxage=60');
+  // A service worker must never be edge/browser cached, or updates (and this file itself)
+  // get pinned stale. Tell the CDN and the browser to always revalidate.
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(path.join(PUBLIC, 'sw.js'));
 });
 app.get('/world', (_req, res) => res.sendFile(path.join(PUBLIC, 'client', 'index.html')));
