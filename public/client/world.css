@@ -25,6 +25,9 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0b1026; color:#ff
 .join-card .beacon-plug{ margin:12px 0 0; }
 .join-card .beacon-plug button{ width:auto; display:inline-block; background:none; border:1px solid rgba(212,175,55,.35); color:#e6c35a; font-size:.82rem; padding:7px 14px; border-radius:999px; cursor:pointer; font-weight:600; }
 .join-card .beacon-plug button:hover{ border-color:var(--gold); color:#f3d473; }
+.join-card .repo-link{ margin:10px 0 0; }
+.join-card .repo-link a{ color:#9fb4c7; font-size:.8rem; text-decoration:none; border-bottom:1px solid rgba(159,180,199,.35); padding-bottom:1px; }
+.join-card .repo-link a:hover{ color:#d7e4f0; border-color:#d7e4f0; }
 
 #topbar{ position:fixed; top:10px; left:10px; right:10px; display:flex; align-items:center; gap:8px; z-index:12; }
 .hud-wordmark{ height:26px; opacity:.95; filter:drop-shadow(0 1px 3px rgba(0,0,0,.6)); }
