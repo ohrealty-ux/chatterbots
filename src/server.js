@@ -278,6 +278,8 @@ function cleanMoney(m) {
   if (!m || typeof m !== 'object') return undefined;
   const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
   const out = {
+    dealType: m.dealType || undefined,
+    unit: m.unit || undefined,
     amountAnchor: num(m.amountAnchor),
     amountIdeal: num(m.amountIdeal),
     amountWalkaway: num(m.amountWalkaway),
@@ -288,7 +290,8 @@ function cleanMoney(m) {
     reveal: m.reveal || 'nothing',
   };
   // drop if entirely empty (only the default reveal present)
-  const hasAny = out.amountAnchor !== undefined || out.amountIdeal !== undefined ||
+  const hasAny = out.dealType || out.unit ||
+    out.amountAnchor !== undefined || out.amountIdeal !== undefined ||
     out.amountWalkaway !== undefined || out.askAbove !== undefined ||
     out.paymentStyle || out.deadline || (out.trades && out.trades.length);
   return hasAny ? out : undefined;
@@ -307,6 +310,19 @@ function publicMeetingView(m) {
   // threshold). Each party's money is returned only to the edit-key holder for that party.
   const strip = (p) => p ? { ...p, walkaway: undefined, authority: undefined, money: undefined } : p;
   return { ...m, parties: { A: strip(m.parties?.A), B: strip(m.parties?.B) } };
+}
+// Edit-key holder scoped to ONE party: that party keeps its own full private data (walk-away
+// text + money block); the OTHER party is stripped exactly like the public view, so its
+// walk-away and money (incl. ask-above) never reach this bot. Walk-away is never revealable
+// regardless of the other party's `reveal` setting.
+function partyScopedView(m, party) {
+  if (!m) return m;
+  const other = party === 'A' ? 'B' : 'A';
+  const strip = (p) => p ? { ...p, walkaway: undefined, authority: undefined, money: undefined } : p;
+  const parties = { ...m.parties };
+  parties[other] = strip(m.parties?.[other]);
+  if (!parties[party]) parties[party] = m.parties?.[party];
+  return { ...m, parties };
 }
 
 app.post('/api/meet', requireJson, jsonSmall, (req, res) => {
@@ -329,8 +345,22 @@ app.get('/api/meet/:id', (req, res) => {
   const m = MeetingPreps.get(id);
   if (!m) return res.status(404).json({ ok: false, error: 'not_found' });
   const holder = meetKeyOk(id, req);
-  const view = holder ? m : publicMeetingView(m);
-  res.json({ ok: true, meeting: view, guide: meetingGuide(view, world), keyHolder: holder });
+  // ?party=A|B — the edit-key holder may scope the view (and the bot guide) to one party, so a
+  // bot receives ONLY its own private money/walk-away block. Without the key, always public.
+  const reqParty = String(req.query.party || '').toUpperCase();
+  const party = (holder && (reqParty === 'A' || reqParty === 'B')) ? reqParty : null;
+  let view, guide;
+  if (party) {
+    view = partyScopedView(m, party);
+    guide = meetingGuide(view, world, party);
+  } else if (holder) {
+    view = m;
+    guide = meetingGuide(m, world);
+  } else {
+    view = publicMeetingView(m);
+    guide = meetingGuide(view, world);
+  }
+  res.json({ ok: true, meeting: view, guide, keyHolder: holder, party });
 });
 
 app.post('/api/meet/:id', requireJson, jsonMid, (req, res) => {

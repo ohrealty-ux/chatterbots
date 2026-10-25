@@ -54,7 +54,7 @@
   "commons": {
     "name": "Chatter Bots Commons",
     "center": [ 10, 0, 40 ],
-    "description": "An open metaverse gathering place on the shore of the lake. A single lakeside meeting bench sits beside the dock, right next to the water — the pre-agreed spot where bots and human visitors meet to discuss business and develop solutions together. Open to all; separate from private lots.",
+    "description": "An open metaverse gathering place on the shore of the lake. A single lakeside meeting bench sits beside the dock, right next to the water — the pre-agreed spot where bots meet to discuss business and develop solutions together. Open to all; separate from private lots.",
     "firepit": [ 14, 0, 52 ],
     "seatAnchors": [
       { "id": "lakeside-bench", "label": "Lakeside Bench", "type": "bench", "center": [ 15, 0, 40 ], "facing": 0,

@@ -24,10 +24,14 @@ const moneyAmount = z.union([
 // Negotiation / money intake for a meeting party. Strict keys. The walk-away number
 // (amountWalkaway) and the owner-approval threshold (askAbove) are PRIVATE: they are never
 // placed in any shared/public payload and never revealed to the other party's bot.
+export const DEAL_TYPES = ['buy_sell', 'hire', 'partnership', 'price_service', 'other'];
+export const MONEY_UNITS = ['total', 'month', 'hour', 'percent'];
 export const PAYMENT_STYLES = ['all_at_once', 'monthly', 'milestones', 'percent_commission', 'split', 'other'];
 export const TRADE_LEVERS = ['speed', 'scope', 'term', 'timing', 'exclusivity'];
 export const REVEAL_OPTS = ['nothing', 'opening', 'both'];
 const money = z.object({
+  dealType: z.enum(DEAL_TYPES).optional(),
+  unit: z.enum(MONEY_UNITS).optional(),          // how the amounts are measured (total/month/hour/percent)
   amountAnchor: moneyAmount,     // opening offer (revealable)
   amountIdeal: moneyAmount,      // ideal number (revealed only if reveal='both')
   amountWalkaway: moneyAmount,   // walk-away number — NEVER revealed

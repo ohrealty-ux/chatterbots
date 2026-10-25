@@ -22,14 +22,73 @@
     { v: 'negotiate', label: 'Negotiate — shape terms, bring back before agreeing' },
     { v: 'commit',    label: 'May commit — can agree within my limits' }
   ];
-  // Meeting locations. Only the lakeside bench is live; the others are coming soon.
+  // Meeting locations — two live choices, each with a short attire helper line.
+  var OFFICE_LOC = 'Prestigious business office';
+  var LAKE_LOC = 'Lakeside bench';
   var LOCATION_OPTS = [
-    { v: 'Lakeside bench',   label: 'Lakeside bench — available now', soon: false },
-    { v: 'Business office',  label: 'Prestigious business office — coming soon', soon: true },
-    { v: 'Fancy restaurant', label: 'Fancy restaurant — coming soon', soon: true }
+    { v: LAKE_LOC,   label: 'Lakeside bench',            help: 'Come as you are.' },
+    { v: OFFICE_LOC, label: 'Prestigious business office', help: 'Formal attire recommended, not required.' }
   ];
+  // Money / negotiation intake lists — shown only when the office is chosen. All optional.
+  var DEAL_TYPES = [
+    { v: 'buy_sell',      label: 'Buy or sell something' },
+    { v: 'hire',          label: 'Hire or get hired' },
+    { v: 'partnership',   label: 'Partnership or referral split' },
+    { v: 'price_service', label: 'Price a service' },
+    { v: 'other',         label: 'Other' }
+  ];
+  var MONEY_UNITS = [
+    { v: 'total',   label: 'total' },
+    { v: 'month',   label: 'per month' },
+    { v: 'hour',    label: 'per hour' },
+    { v: 'percent', label: 'percent' }
+  ];
+  var PAYMENT_STYLES = [
+    { v: 'all_at_once',        label: 'All at once' },
+    { v: 'monthly',            label: 'Monthly' },
+    { v: 'milestones',         label: 'Milestones' },
+    { v: 'percent_commission', label: 'Percent commission' },
+    { v: 'split',              label: 'Split' },
+    { v: 'other',              label: 'Other' }
+  ];
+  var TRADE_LEVERS = [
+    { v: 'speed',       label: 'Price for speed' },
+    { v: 'scope',       label: 'Price for scope' },
+    { v: 'term',        label: 'Price for longer term' },
+    { v: 'timing',      label: 'Price for payment timing' },
+    { v: 'exclusivity', label: 'Price for exclusivity' }
+  ];
+  var REVEAL_OPTS = [
+    { v: 'nothing', label: 'Nothing' },
+    { v: 'opening', label: 'Opening offer only' },
+    { v: 'both',    label: 'Offer and ideal number' }
+  ];
+  var MONEY_DISCLAIMER = 'Your bot advises only. It can\u2019t sign, pay or promise anything. Not financial or legal advice.';
+  // Numbers only, 0 to 1,000,000,000, at most 2 decimals. Blank is allowed (left unset).
+  function validMoney(str) {
+    var s = String(str == null ? '' : str).trim();
+    if (s === '') return true;
+    if (!/^\d+(\.\d{1,2})?$/.test(s)) return false;
+    var n = Number(s);
+    return isFinite(n) && n >= 0 && n <= 1e9;
+  }
 
   var meetId = null, meeting = null, editing = { A: false, B: false }, botGuideData = null;
+  // The per-meeting edit key: returned once by the server on create, then required (X-Meet-Key)
+  // to load private fields and to save a party. Kept in memory + localStorage keyed by meeting id.
+  var editKey = null;
+  function keyStoreName(id) { return 'cb_meetkey_' + id; }
+  function loadStoredKey(id) {
+    if (!id) return null;
+    if (editKey) return editKey;
+    try { editKey = localStorage.getItem(keyStoreName(id)) || null; } catch (e) { editKey = null; }
+    return editKey;
+  }
+  function storeKey(id, k) {
+    if (!id || !k) return;
+    editKey = k;
+    try { localStorage.setItem(keyStoreName(id), k); } catch (e) {}
+  }
 
   function $(id) { return document.getElementById(id); }
   function qp(name) { return new URLSearchParams(location.search).get(name); }
@@ -37,14 +96,22 @@
   function worldUrl() { return location.origin + '/world'; }
 
   // ---- API ----
-  function api(path, opts) {
-    return fetch(path, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts || {}))
+  // When `withKey` is set and we hold the edit key, send it as X-Meet-Key so the server
+  // returns this owner's private fields (and accepts a save). The key never travels in the URL.
+  function api(path, opts, withKey) {
+    var headers = { 'Content-Type': 'application/json' };
+    if (withKey && editKey) headers['X-Meet-Key'] = editKey;
+    return fetch(path, Object.assign({ headers: headers }, opts || {}))
       .then(function (r) { return r.json().catch(function () { return { ok: false }; }); });
   }
-  function createMeeting() { return api('/api/meet', { method: 'POST', body: JSON.stringify({ location: 'Lakeside bench' }) }); }
-  function loadMeeting(id) { return api('/api/meet/' + encodeURIComponent(id)); }
+  function createMeeting() { return api('/api/meet', { method: 'POST', body: JSON.stringify({ location: LAKE_LOC }) }); }
+  // Load scoped to a party when we hold the key, so the owner sees their own private prep.
+  function loadMeeting(id, party) {
+    var q = (editKey && (party === 'A' || party === 'B')) ? ('?party=' + party) : '';
+    return api('/api/meet/' + encodeURIComponent(id) + q, undefined, true);
+  }
   function saveParty(id, party, prep) {
-    return api('/api/meet/' + encodeURIComponent(id), { method: 'POST', body: JSON.stringify(Object.assign({ party: party }, prep)) });
+    return api('/api/meet/' + encodeURIComponent(id), { method: 'POST', body: JSON.stringify(Object.assign({ party: party }, prep)) }, true);
   }
 
   // ---- small DOM helpers ----
@@ -110,7 +177,25 @@
       ['Bot research + report', d.research ? 'Yes' : 'No'],
       ['Tell me on my Bot Beacon', d.beaconNotify ? 'Yes' : 'No'],
       ['Proposed time', cleanTimeLabel(d.time)],
-      ['Location', (d.location || 'Lakeside bench') + ' — for now (prestigious business office & fancy restaurant coming soon)']];
+      ['Location', (d.location || LAKE_LOC)]];
+    // Money rows (private to this owner) — only when present.
+    if (d.money && typeof d.money === 'object') {
+      var mm = d.money;
+      var lbl = function (list, v) { for (var i = 0; i < list.length; i++) { if (list[i].v === v) return list[i].label; } return v || ''; };
+      var unitTxt = mm.unit ? (' ' + lbl(MONEY_UNITS, mm.unit)) : '';
+      var moneyRows = [
+        ['Deal type', lbl(DEAL_TYPES, mm.dealType)],
+        ['Opening offer', mm.amountAnchor != null ? ('$' + mm.amountAnchor + unitTxt) : ''],
+        ['Ideal number', mm.amountIdeal != null ? ('$' + mm.amountIdeal + unitTxt) : ''],
+        ['Walk-away (private)', mm.amountWalkaway != null ? ('$' + mm.amountWalkaway + unitTxt) : ''],
+        ['Stop & ask above (private)', mm.askAbove != null ? ('$' + mm.askAbove + unitTxt) : ''],
+        ['Payment style', lbl(PAYMENT_STYLES, mm.paymentStyle)],
+        ['Deadline', mm.deadline || ''],
+        ['Trade-offs offered', (Array.isArray(mm.trades) ? mm.trades.map(function (t) { return lbl(TRADE_LEVERS, t); }).join(', ') : '')],
+        ['Reveal to other party', lbl(REVEAL_OPTS, mm.reveal || 'nothing')]
+      ];
+      rows = rows.concat(moneyRows);
+    }
     rows.forEach(function (r) {
       var row = el('div', 'row');
       row.appendChild(el('div', 'k', r[0]));
@@ -122,6 +207,80 @@
     var edit = el('button', 'link-btn', 'Edit ' + (party === 'A' ? 'Party A' : 'Party B') + '\u2019s prep');
     edit.addEventListener('click', function () { editing[party] = true; renderParty(party); });
     host.appendChild(edit);
+  }
+
+  // Build the "Money (private to you)" section. Returns { wrap, read }. read() validates the
+  // numeric inputs client-side and returns { money, error }. Everything here is optional and
+  // private to this owner; it is sent only with the owner's own X-Meet-Key.
+  function buildMoneySection(party, m) {
+    var pfx = 'f_' + party + '_money_';
+    var wrap = el('div', 'field money-sec');
+    wrap.appendChild(el('h3', 'money-title', 'Money (private to you)'));
+    wrap.appendChild(el('span', 'help', 'Only your bot sees this. The other party never sees your walk-away number.'));
+
+    function selField(label, id, opts, val, includeBlank) {
+      var f = el('div', 'field');
+      f.appendChild(el('label', null, label));
+      var s = el('select'); s.id = id; s.className = 'tz';
+      if (includeBlank) { var b = el('option', null, '—'); b.value = ''; s.appendChild(b); }
+      opts.forEach(function (o) { var op = el('option', null, o.label); op.value = o.v; s.appendChild(op); });
+      if (val != null) s.value = val;
+      f.appendChild(s); wrap.appendChild(f); return s;
+    }
+    function numField(label, id, val, help) {
+      var f = el('div', 'field');
+      f.appendChild(el('label', null, label));
+      if (help) f.appendChild(el('span', 'help', help));
+      var i = el('input'); i.type = 'text'; i.inputMode = 'decimal'; i.id = id; i.placeholder = 'e.g. 400000';
+      if (val != null && val !== '') i.value = val;
+      f.appendChild(i); wrap.appendChild(f); return i;
+    }
+
+    var dealSel = selField('Deal type', pfx + 'deal', DEAL_TYPES, m.dealType || '', true);
+    var unitSel = selField('Measured as', pfx + 'unit', MONEY_UNITS, m.unit || 'total', false);
+    var openIn = numField('Opening offer (USD)', pfx + 'anchor', m.amountAnchor, 'Where your bot starts.');
+    var idealIn = numField('Ideal number (USD)', pfx + 'ideal', m.amountIdeal, 'What you\u2019d love to land on.');
+    var walkIn = numField('Walk-away number (USD) — private', pfx + 'walk', m.amountWalkaway, 'Your bot never crosses this and never reveals it.');
+    var paySel = selField('Payment style', pfx + 'pay', PAYMENT_STYLES, m.paymentStyle || '', true);
+
+    var dlF = el('div', 'field'); dlF.appendChild(el('label', null, 'Deadline (optional)'));
+    var dlIn = el('input'); dlIn.type = 'date'; dlIn.id = pfx + 'deadline'; if (m.deadline) dlIn.value = m.deadline;
+    dlF.appendChild(dlIn); wrap.appendChild(dlF);
+
+    // Trade-off levers (checkboxes).
+    var tF = el('div', 'field'); tF.appendChild(el('label', null, 'Trade-offs your bot may offer'));
+    var tBox = el('div', 'trade-grid'); var tChks = {};
+    var have = Array.isArray(m.trades) ? m.trades : [];
+    TRADE_LEVERS.forEach(function (o) {
+      var row = el('label', 'check-row');
+      var c = el('input'); c.type = 'checkbox'; c.value = o.v; if (have.indexOf(o.v) !== -1) c.checked = true;
+      tChks[o.v] = c; row.appendChild(c); row.appendChild(el('span', null, o.label)); tBox.appendChild(row);
+    });
+    tF.appendChild(tBox); wrap.appendChild(tF);
+
+    var askIn = numField('Stop & ask me before agreeing above (USD)', pfx + 'ask', m.askAbove, 'Your bot pauses for your OK above this. Private.');
+    var revSel = selField('Reveal to the other party', pfx + 'reveal', REVEAL_OPTS, m.reveal || 'nothing', false);
+
+    wrap.appendChild(el('p', 'money-note', MONEY_DISCLAIMER));
+
+    function read() {
+      var nums = [['Opening offer', openIn], ['Ideal number', idealIn], ['Walk-away number', walkIn], ['Stop-and-ask amount', askIn]];
+      for (var i = 0; i < nums.length; i++) { if (!validMoney(nums[i][1].value)) return { error: nums[i][0] + ' must be a number from 0 to 1,000,000,000 (max 2 decimals).' }; }
+      var trades = []; Object.keys(tChks).forEach(function (k) { if (tChks[k].checked) trades.push(k); });
+      var money = {};
+      if (dealSel.value) money.dealType = dealSel.value;
+      if (unitSel.value) money.unit = unitSel.value;
+      if (String(openIn.value).trim() !== '') money.amountAnchor = String(openIn.value).trim();
+      if (String(idealIn.value).trim() !== '') money.amountIdeal = String(idealIn.value).trim();
+      if (String(walkIn.value).trim() !== '') money.amountWalkaway = String(walkIn.value).trim();
+      if (String(askIn.value).trim() !== '') money.askAbove = String(askIn.value).trim();
+      if (paySel.value) money.paymentStyle = paySel.value;
+      if (dlIn.value) money.deadline = dlIn.value;
+      if (trades.length) money.trades = trades;
+      money.reveal = revSel.value || 'nothing';
+      return { money: money };
+    }
+    return { wrap: wrap, read: read };
   }
 
   function renderForm(host, party, d) {
@@ -153,17 +312,24 @@
     tWrap.appendChild(pick);
     var lWrap = el('div', 'field');
     lWrap.appendChild(el('label', null, 'Location'));
-    lWrap.appendChild(el('span', 'help', 'Pick where the bots meet. More venues are on the way.'));
-    // Location picker: only the lakeside bench is selectable; others are disabled (coming soon).
+    lWrap.appendChild(el('span', 'help', 'Pick where the bots meet.'));
+    // Location picker: two live choices. Each shows its own attire helper line.
     var lIn = el('select'); lIn.id = 'f_' + party + '_loc'; lIn.name = 'location'; lIn.className = 'tz';
-    LOCATION_OPTS.forEach(function (o) {
-      var opt = el('option', null, o.label); opt.value = o.v; if (o.soon) opt.disabled = true; lIn.appendChild(opt);
-    });
-    lIn.value = (d.location && d.location === 'Lakeside bench') ? d.location : 'Lakeside bench';
+    LOCATION_OPTS.forEach(function (o) { var opt = el('option', null, o.label); opt.value = o.v; lIn.appendChild(opt); });
+    lIn.value = (d.location === OFFICE_LOC) ? OFFICE_LOC : LAKE_LOC;
     lWrap.appendChild(lIn);
-    // Read-only confirmation of where it actually happens for now (preserves the prior read-only display).
-    lWrap.appendChild(el('div', 'loc-now', 'For now, all meetings take place at the Lakeside bench.'));
+    var locHelp = el('div', 'loc-now', '');
+    lWrap.appendChild(locHelp);
+    function helpFor(v) { for (var i = 0; i < LOCATION_OPTS.length; i++) { if (LOCATION_OPTS[i].v === v) return LOCATION_OPTS[i].help; } return ''; }
+    locHelp.textContent = helpFor(lIn.value);
     sched.appendChild(tWrap); sched.appendChild(lWrap); form.appendChild(sched);
+
+    // Money (private to you) — shown only when the office is chosen. All fields optional.
+    var moneySec = buildMoneySection(party, d.money || {});
+    form.appendChild(moneySec.wrap);
+    function syncMoney() { moneySec.wrap.style.display = (lIn.value === OFFICE_LOC) ? '' : 'none'; locHelp.textContent = helpFor(lIn.value); }
+    lIn.addEventListener('change', syncMoney);
+    syncMoney();
 
     // Authority level — how far the bot may go on your behalf.
     var aWrap = el('div', 'field');
@@ -203,10 +369,16 @@
       var prep = {};
       FIELDS.forEach(function (f) { prep[f.k] = (form.querySelector('[name="' + f.k + '"]').value || '').trim(); });
       prep.time = composeTime(dIn.value, hIn.value, zIn.value);
-      prep.location = (String(lIn.value || '').trim() || 'Lakeside bench');
+      prep.location = (String(lIn.value || '').trim() || LAKE_LOC);
       prep.authority = aSel.value || 'advise';
       prep.research = !!rChk.checked;
       prep.beaconNotify = !!bChk.checked;
+      // Money is relevant only at the office; validate + attach it there.
+      if (prep.location === OFFICE_LOC) {
+        var mr = moneySec.read();
+        if (mr.error) { msg.textContent = mr.error; msg.style.color = '#ff9d7a'; return; }
+        if (mr.money) prep.money = mr.money;
+      }
       btn.disabled = true; msg.textContent = 'Saving…'; msg.style.color = '';
       // The meeting is created lazily on the FIRST save — not on page load.
       ensureMeeting().then(function (ok) {
@@ -223,11 +395,12 @@
 
   // ---- share actions (same four as the app, now sharing the /meet link) ----
   function setStatus(m) { var el2 = $('shareStatus'); if (!el2) return; el2.textContent = m; clearTimeout(el2._t); el2._t = setTimeout(function () { el2.textContent = ''; }, 2600); }
-  function inviteMsg() { return 'Will your bot meet my bot at Chatter Bots (lakeside bench)? Fill out your meeting prep here — ' + meetUrl(); }
+  function locName() { return (meeting && meeting.location) || LAKE_LOC; }
+  function inviteMsg() { return 'Will your bot meet my bot at Chatter Bots (' + locName() + ')? Fill out your meeting prep here — ' + meetUrl(); }
   function doShare(action) {
     if (!meetId) { setStatus('Save your prep first — that creates the shareable link.'); return; }
     var link = meetUrl();
-    var xText = 'Will your bot meet my bot at Chatter Bots (lakeside bench)? Fill out your meeting prep here.';
+    var xText = 'Will your bot meet my bot at Chatter Bots (' + locName() + ')? Fill out your meeting prep here.';
     if (action === 'copy') {
       (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject())
         .then(function () { setStatus('Link copied \u2713'); })
@@ -251,7 +424,9 @@
     if (meetId) return Promise.resolve(true);
     return createMeeting().then(function (c) {
       if (!c || !c.ok || !c.id) return false;
-      meetId = c.id; history.replaceState(null, '', meetUrl()); refreshLink();
+      meetId = c.id;
+      if (c.editKey) storeKey(meetId, c.editKey);   // returned once — persist so saves authenticate
+      history.replaceState(null, '', meetUrl()); refreshLink();
       return true;
     }).catch(function () { return false; });
   }
@@ -318,6 +493,21 @@
       host.appendChild(b);
     }
 
+    // Private negotiation guidance (only present when this view is scoped to one party with money).
+    if (g.negotiation && g.negotiation.instruction) {
+      var ng = el('div', 'guide-block');
+      ng.appendChild(el('h3', 'guide-h', '🤝 Negotiating (private to you)'));
+      ng.appendChild(el('p', 'guide-p', g.negotiation.instruction));
+      host.appendChild(ng);
+    }
+    // Money-summary instruction for the report (shown when any party brought money terms).
+    if (g.moneySummary) {
+      var ms = el('div', 'guide-block');
+      ms.appendChild(el('h3', 'guide-h', '💵 Money summary in the report'));
+      ms.appendChild(el('p', 'guide-p', g.moneySummary));
+      host.appendChild(ms);
+    }
+
     // How to report back (includes the decorative Bot Beacon one-liner when opted in).
     if (g.reportBack) {
       var rb = el('div', 'guide-block');
@@ -359,6 +549,7 @@
     $('enterWorld').setAttribute('href', worldUrl());
 
     meetId = qp('m');
+    if (meetId) loadStoredKey(meetId);   // reuse the key if we created this meeting earlier
     // No auto-create: a meeting is only created on the first Save (see ensureMeeting).
     // With an id in the URL we load that meeting; without one we render empty prep forms.
     var ready = meetId
