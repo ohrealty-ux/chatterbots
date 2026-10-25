@@ -6,7 +6,7 @@
    - Deletes old caches on activate. */
 'use strict';
 
-const CACHE = 'chatterbots-shell-v2';
+const CACHE = 'chatterbots-shell-v3';
 
 // The static shell. Versioned asset URLs match exactly what the pages request so the
 // offline fallback lookup hits. Bump CACHE (and these ?v= values if the pages change) on release.
@@ -16,7 +16,7 @@ const SHELL = [
   '/manifest.webmanifest',
   '/client/meet.html',
   '/client/meet.css?v=7',
-  '/client/meet.js?v=7',
+  '/client/meet.js?v=9',
   '/client/world.css?v=7',
   '/client/world.js?v=11',
   '/client/boot-err.js?v=1',
