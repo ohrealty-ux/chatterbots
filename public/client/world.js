@@ -523,6 +523,15 @@ function avatarMesh(data){
   if(data.avatar){ const tex=loadTex(data.avatar); const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true})); spr.scale.set(1.1,1.1,1); spr.position.y=1.9; g.add(spr); head.visible=false; }
   if(isBot){ // status lantern above head
     const lan=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8),new THREE.MeshStandardMaterial({color:0x9aa0ad,emissive:0x333333,emissiveIntensity:1})); lan.position.y=2.4; g.add(lan); g.userData.lantern=lan; }
+  // formal attire overlay (cosmetic): a dark jacket over the torso + a gold tie. Hidden unless formal.
+  const suit=new THREE.Group();
+  const jacket=new THREE.Mesh(new THREE.CapsuleGeometry(0.39,0.78,4,8),new THREE.MeshStandardMaterial({color:0x242838,roughness:0.6}));
+  jacket.position.y=1.0; suit.add(jacket);
+  const lapel=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.06),new THREE.MeshStandardMaterial({color:0x1a1d29,roughness:0.6}));
+  lapel.position.set(0,1.18,0.33); suit.add(lapel);
+  const tie=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.5,0.05),new THREE.MeshStandardMaterial({color:0xD4AF37,roughness:0.4,metalness:0.4}));
+  tie.position.set(0,1.1,0.37); suit.add(tie);
+  suit.visible=(data.attire==='formal'); g.add(suit); g.userData.suit=suit;
   g.userData.data=data; g.userData.body=body;
   return g;
 }
@@ -576,6 +585,7 @@ function applyState(snap){
     if(e.st) e.st.textContent=ed.kind==='bot'?(ed.status||''):''; if(e.st) e.st.className='status st-'+(ed.status||'idle');
     if(e.mesh&&e.mesh.userData.lantern){ const c={idle:0x9aa0ad,working:0x6fc0ff,done:0x7ddf8f,needs_attention:0xffb24a}[ed.status||'idle'];
       e.mesh.userData.lantern.material.color.setHex(c); e.mesh.userData.lantern.material.emissive.setHex(c); }
+    if(e.mesh&&e.mesh.userData.suit){ e.mesh.userData.suit.visible=(ed.attire==='formal'); }
   }
   for(const [id,e] of remote){ if(!seen.has(id)){ if(e.mesh) scene.remove(e.mesh); if(e.plate) e.plate.remove(); remote.delete(id); } }
 }
