@@ -142,10 +142,16 @@
   function cleanTimeLabel(s) { return s ? String(s).replace(/\s*·?\s*\[[^\]]*\]\s*$/, '').trim() : s; }
   function composeTime(dateStr, todStr, tz) {
     if (!dateStr || !todStr) return '';
-    var dt = new Date(dateStr + 'T' + todStr);
     var label;
     try {
-      label = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: tz, timeZoneName: 'short' }).format(dt);
+      // Build the label from the typed date/time as-is (wall-clock in the chosen zone),
+      // never by converting through the browser's own timezone.
+      var dp = dateStr.split('-').map(Number), tp = todStr.split(':').map(Number);
+      var noon = new Date(Date.UTC(dp[0], dp[1] - 1, dp[2], 12, 0, 0));
+      var day = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(noon);
+      var abbr = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'short' }).formatToParts(noon).find(function (p) { return p.type === 'timeZoneName'; }).value;
+      var h12 = tp[0] % 12 === 0 ? 12 : tp[0] % 12;
+      label = day + ', ' + h12 + ':' + String(tp[1]).padStart(2, '0') + ' ' + (tp[0] >= 12 ? 'PM' : 'AM') + ' ' + abbr;
     } catch (e) { label = dateStr + ' ' + todStr; }
     return label + '  ·  [' + dateStr + ' ' + todStr + '|tz=' + tz + ']';
   }
