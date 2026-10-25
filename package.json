@@ -38,7 +38,7 @@
     "demo:discussion": "node scripts/discussion-sim.js"
   },
   "dependencies": {
-    "better-sqlite3": "12.11.1",
+    "better-sqlite3": "13.0.3",
     "cookie": "2.0.1",
     "dotenv": "16.4.5",
     "express": "4.22.3",
