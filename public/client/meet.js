@@ -366,7 +366,7 @@
     // Money (private to you) — shown only when the office is chosen. All fields optional.
     var moneySec = buildMoneySection(party, d.money || {});
     form.appendChild(moneySec.wrap);
-    function syncMoney() { moneySec.wrap.style.display = (lIn.value === OFFICE_LOC) ? '' : 'none'; locHelp.textContent = helpFor(lIn.value); }
+    function syncMoney() { moneySec.wrap.style.display = (lIn.value === OFFICE_LOC) ? '' : 'none'; }
     lIn.addEventListener('change', syncMoney);
     syncMoney();
 
