@@ -34,6 +34,39 @@
   // ---- small DOM helpers ----
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 
+  // ---- scheduling helpers: concrete date + time + timezone so both parties sync exactly ----
+  function localTz() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (e) { return 'UTC'; } }
+  function isoDate(dt) { return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0'); }
+  function tzLabel(z) {
+    var abbr = '';
+    try { abbr = new Intl.DateTimeFormat('en-US', { timeZone: z, timeZoneName: 'short' }).formatToParts(new Date()).find(function (p) { return p.type === 'timeZoneName'; }).value; } catch (e) {}
+    return z.replace(/_/g, ' ') + (abbr ? ' (' + abbr + ')' : '');
+  }
+  function buildTzList() {
+    var common = ['America/Los_Angeles', 'America/Denver', 'America/Chicago', 'America/New_York', 'America/Phoenix', 'America/Anchorage', 'Pacific/Honolulu', 'UTC', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Asia/Kolkata', 'Asia/Dubai', 'Asia/Singapore', 'Asia/Tokyo', 'Australia/Sydney'];
+    var lz = localTz();
+    common = [lz].concat(common.filter(function (z) { return z !== lz; }));
+    return common.map(function (z) { return { id: z, label: tzLabel(z) }; });
+  }
+  // Saved time stores a readable label plus a machine token "[YYYY-MM-DD HH:MM|tz=Zone]" for exact sync/restore.
+  function parseSaved(s) {
+    var out = { date: '', tod: '', tz: '' };
+    if (!s) return out;
+    var m = String(s).match(/\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})\|tz=([^\]]+)\]/);
+    if (m) { out.date = m[1]; out.tod = m[2]; out.tz = m[3]; }
+    return out;
+  }
+  function cleanTimeLabel(s) { return s ? String(s).replace(/\s*·?\s*\[[^\]]*\]\s*$/, '').trim() : s; }
+  function composeTime(dateStr, todStr, tz) {
+    if (!dateStr || !todStr) return '';
+    var dt = new Date(dateStr + 'T' + todStr);
+    var label;
+    try {
+      label = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: tz, timeZoneName: 'short' }).format(dt);
+    } catch (e) { label = dateStr + ' ' + todStr; }
+    return label + '  ·  [' + dateStr + ' ' + todStr + '|tz=' + tz + ']';
+  }
+
   // ---- render one party card (form or summary) ----
   function renderParty(party) {
     var host = party === 'A' ? $('partyA') : $('partyB');
@@ -56,7 +89,7 @@
     var rows = [['Name / bot', d.name], ['Goals', d.goals], ['Files / references', d.files],
       ['Hoping to accomplish', d.accomplish], ['Ideas & format', d.ideas], ['Meetup notes', d.notes],
       ['Bot research + report', d.research ? 'Yes' : 'No'],
-      ['Proposed time', d.time], ['Location', d.location]];
+      ['Proposed time', cleanTimeLabel(d.time)], ['Location', d.location]];
     rows.forEach(function (r) {
       var row = el('div', 'row');
       row.appendChild(el('div', 'k', r[0]));
@@ -84,9 +117,19 @@
     // scheduling basics
     var sched = el('div', 'grid2');
     var tWrap = el('div', 'field');
-    var tLab = el('label', null, 'Proposed time'); tLab.htmlFor = 'f_' + party + '_time'; tWrap.appendChild(tLab);
-    tWrap.appendChild(el('span', 'help', 'When should the bots meet?'));
-    var tIn = el('input'); tIn.id = 'f_' + party + '_time'; tIn.name = 'time'; tIn.placeholder = 'e.g. Tue 2:00pm PT'; if (d.time) tIn.value = d.time; tWrap.appendChild(tIn);
+    tWrap.appendChild(el('label', null, 'Proposed date & time'));
+    tWrap.appendChild(el('span', 'help', 'Pick a slot and your timezone so both bots arrive together.'));
+    var pick = el('div', 'pick3');
+    var dIn = el('input'); dIn.type = 'date'; dIn.id = 'f_' + party + '_date'; dIn.min = isoDate(new Date());
+    var hIn = el('input'); hIn.type = 'time'; hIn.id = 'f_' + party + '_tod'; hIn.step = '300';
+    var zIn = el('select'); zIn.id = 'f_' + party + '_tz'; zIn.className = 'tz';
+    buildTzList().forEach(function (z) { var o = el('option', null, z.label); o.value = z.id; zIn.appendChild(o); });
+    var saved = parseSaved(d.time);
+    dIn.value = saved.date || '';
+    hIn.value = saved.tod || '';
+    zIn.value = saved.tz || localTz();
+    pick.appendChild(dIn); pick.appendChild(hIn); pick.appendChild(zIn);
+    tWrap.appendChild(pick);
     var lWrap = el('div', 'field');
     var lLab = el('label', null, 'Location'); lLab.htmlFor = 'f_' + party + '_loc'; lWrap.appendChild(lLab);
     lWrap.appendChild(el('span', 'help', 'Keep it simple.'));
@@ -110,7 +153,7 @@
       e.preventDefault();
       var prep = {};
       FIELDS.forEach(function (f) { prep[f.k] = (form.querySelector('[name="' + f.k + '"]').value || '').trim(); });
-      prep.time = tIn.value.trim(); prep.location = (lIn.value.trim() || 'Lakeside bench');
+      prep.time = composeTime(dIn.value, hIn.value, zIn.value); prep.location = (lIn.value.trim() || 'Lakeside bench');
       prep.research = !!rChk.checked;
       btn.disabled = true; msg.textContent = 'Saving…'; msg.style.color = '';
       saveParty(meetId, party, prep).then(function (r) {

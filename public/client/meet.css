@@ -68,6 +68,11 @@ a{ color:var(--gold); }
 .field input:focus, .field textarea:focus{ outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,175,55,.18); }
 .field textarea{ min-height:76px; line-height:1.5; }
 .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.pick3{ display:grid; grid-template-columns:1.1fr 0.9fr 1.4fr; gap:8px; }
+.pick3 input, .pick3 select{ width:100%; box-sizing:border-box; }
+.pick3 select.tz{ color:#f4ecd6; background:#20242c; }
+.pick3 input[type=date], .pick3 input[type=time]{ color:#f4ecd6; background:#20242c; }
+@media (max-width:560px){ .pick3{ grid-template-columns:1fr; } }
 .field.check .check-row{ display:flex; align-items:flex-start; gap:10px; font-weight:600; font-size:.88rem;
   color:#eef1f7; line-height:1.45; cursor:pointer; margin:0; }
 .field.check input[type=checkbox]{ width:18px; height:18px; margin:2px 0 0; flex:0 0 auto; accent-color:var(--gold); cursor:pointer; }

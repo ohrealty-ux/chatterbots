@@ -251,7 +251,8 @@ app.post('/api/meet/:id', jsonParser, (req, res) => {
   const m = MeetingPreps.setParty(id, party, prep);
   if (!m) return res.status(404).json({ ok: false, error: 'not_found' });
   // keep the meeting-level schedule/location in step with the most recent submission
-  MeetingPreps.setMeta(id, { location: prep.location, timeLabel: prep.time || null });
+  const cleanLabel = prep.time ? prep.time.replace(/\s*·?\s*\[[^\]]*\]\s*$/, '').trim() : null;
+  MeetingPreps.setMeta(id, { location: prep.location, timeLabel: cleanLabel || null });
   AuditLog.add('visitor', 'meet_submit', { id, party });
   res.json({ ok: true, meeting: MeetingPreps.get(id) });
 });
