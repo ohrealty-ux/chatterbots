@@ -124,10 +124,10 @@
 
   // ---- share actions (same four as the app, now sharing the /meet link) ----
   function setStatus(m) { var el2 = $('shareStatus'); if (!el2) return; el2.textContent = m; clearTimeout(el2._t); el2._t = setTimeout(function () { el2.textContent = ''; }, 2600); }
-  function inviteMsg() { return 'Will your bot meet my bot at The Bot Farm (lakeside bench)? Fill out your meeting prep here — ' + meetUrl(); }
+  function inviteMsg() { return 'Will your bot meet my bot at Chatter Bots (lakeside bench)? Fill out your meeting prep here — ' + meetUrl(); }
   function doShare(action) {
     var link = meetUrl();
-    var xText = 'Will your bot meet my bot at The Bot Farm (lakeside bench)? Fill out your meeting prep here.';
+    var xText = 'Will your bot meet my bot at Chatter Bots (lakeside bench)? Fill out your meeting prep here.';
     if (action === 'copy') {
       (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject())
         .then(function () { setStatus('Link copied \u2713'); })

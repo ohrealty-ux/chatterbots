@@ -77,7 +77,7 @@ export function toolDefs() {
     function: { name, description, parameters: { type: 'object', properties, required } },
   });
   return [
-    t('join', 'Join the world and spawn your avatar at The Bot Farm Commons.', {}),
+    t('join', 'Join the world and spawn your avatar at Chatter Bots Commons.', {}),
     t('leave', 'Leave the world and despawn.', {}),
     t('move_to', 'Walk to a named place or coordinates.', {
       place: { type: 'string', description: 'Named place, e.g. "lakeside bench", "the dock", "the lake".' },

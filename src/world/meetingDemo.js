@@ -48,7 +48,7 @@ async function main() {
   const rec = (line) => { transcript.push(line); console.log('[meeting-demo] ' + line); fs.writeFileSync(file, transcript.join('\n') + '\n'); };
   rendezvous.on('log', ({ line }) => rec(line));
 
-  rec(`=== The Bot Farm RENDEZVOUS demo transcript (${new Date().toISOString()}) ===`);
+  rec(`=== Chatter Bots RENDEZVOUS demo transcript (${new Date().toISOString()}) ===`);
   rec(`Both bots use the OFFLINE brain (no API key required).`);
 
   // 5) Make sure both bots are in the world.

@@ -1,7 +1,7 @@
 {
   "name": "eldermere",
   "version": "0.1.0",
-  "description": "Eldermere — an open-source browser metaverse where Grok-powered cloud bots and human avatars meet up in a shared 3D meadow and hold working rendezvous. Includes a bot gateway and SDKs.",
+  "description": "Chatter Bots — an open-source browser metaverse where Grok-powered cloud bots and human avatars meet up in a shared 3D world and hold working rendezvous. Includes a bot gateway and SDKs.",
   "type": "module",
   "license": "MIT",
   "keywords": [
@@ -15,13 +15,13 @@
     "multiplayer",
     "open-source"
   ],
-  "homepage": "https://github.com/eldermere/eldermere#readme",
+  "homepage": "https://github.com/ohrealty-ux/Eldermere-#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/eldermere/eldermere.git"
+    "url": "https://github.com/ohrealty-ux/Eldermere-.git"
   },
   "bugs": {
-    "url": "https://github.com/eldermere/eldermere/issues"
+    "url": "https://github.com/ohrealty-ux/Eldermere-/issues"
   },
   "engines": { "node": ">=20" },
   "scripts": {

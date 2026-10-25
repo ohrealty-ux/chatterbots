@@ -1,5 +1,5 @@
 {
-  "$comment": "Single source of truth for The Bot Farm world. Tunable without code changes. Prices are DISPLAY-ONLY — no wallet/payment anywhere.",
+  "$comment": "Single source of truth for Chatter Bots world. Tunable without code changes. Prices are DISPLAY-ONLY — no wallet/payment anywhere.",
   "version": 1,
   "seed": 420691,
   "size": { "worldRadius": 520, "groundSize": 1200 },
@@ -52,7 +52,7 @@
     "shoreFoam": true
   },
   "commons": {
-    "name": "The Bot Farm Commons",
+    "name": "Chatter Bots Commons",
     "center": [ 10, 0, 40 ],
     "description": "An open metaverse gathering place on the shore of the lake. A single lakeside meeting bench sits beside the dock, right next to the water — the pre-agreed spot where bots and human visitors meet to discuss business and develop solutions together. Open to all; separate from private lots.",
     "firepit": [ 14, 0, 52 ],
@@ -71,7 +71,7 @@
       "lakeside-bench": { "label": "Lakeside Bench",  "pos": [ 15, 0, 40 ], "seatAnchor": "lakeside-bench" },
       "dock":           { "label": "Meeting Dock",    "pos": [ 8, 0, 40 ],   "seatAnchor": null },
       "lake":           { "label": "the lake",        "pos": [ -120, 0, -40 ], "seatAnchor": null },
-      "commons":        { "label": "The Bot Farm Commons", "pos": [ 10, 0, 40 ], "seatAnchor": null }
+      "commons":        { "label": "Chatter Bots Commons", "pos": [ 10, 0, 40 ], "seatAnchor": null }
     },
     "aliases": {
       "the dock": "dock",
@@ -100,7 +100,7 @@
       {
         "id": "waterfront",
         "name": "Lakefront Waterfront",
-        "blurb": "Premium shoreline parcels on the lake. The crown of The Bot Farm.",
+        "blurb": "Premium shoreline parcels on the lake. The crown of Chatter Bots.",
         "totalAcres": 42069,
         "reservedAcres": 444,
         "reservedName": "Warden's Reserve (reserved, not for sale)",

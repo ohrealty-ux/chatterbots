@@ -1,4 +1,4 @@
-// Eldermere — gorgeous, procedural, data-driven Three.js world. Default HIGH quality.
+// Chatter Bots — gorgeous, procedural, data-driven Three.js world. Default HIGH quality.
 // Everything procedural (no external model fetch) so it ships reliably from any host.
 import * as THREE from '/vendor/three.module.js';
 import { EffectComposer } from '/vendor/jsm/postprocessing/EffectComposer.js';
@@ -456,7 +456,7 @@ function ensurePlate(id,data){
   const plate=document.createElement('div'); plate.className='plate'+(data.kind==='bot'?' bot':'');
   const nm=document.createElement('span'); nm.className='nm'; nm.textContent=data.name; plate.appendChild(nm);
   if(data.kind==='bot'){ const tag=document.createElement('span'); tag.className='tag'; tag.textContent='BOT'; nm.appendChild(tag);
-    const owner=document.createElement('span'); owner.className='owner'; owner.textContent='by '+(data.owner||'The Bot Farm'); plate.appendChild(owner); }
+    const owner=document.createElement('span'); owner.className='owner'; owner.textContent='by '+(data.owner||'Chatter Bots'); plate.appendChild(owner); }
   const st=document.createElement('span'); st.className='status st-'+(data.status||'idle'); st.textContent=''; plate.appendChild(st);
   const bubble=document.createElement('span'); bubble.className='bubble'; bubble.style.display='none'; plate.appendChild(bubble);
   platesRoot.appendChild(plate);
@@ -540,22 +540,21 @@ async function ensureMeeting(){
   const id=await _meetPending; _meetPending=null; return id;
 }
 function meetUrlFor(id){ return location.origin+'/meet?m='+encodeURIComponent(id); }
-function inviteText(link){ return 'Will your bot meet my bot at The Bot Farm (lakeside bench)? Fill out your meeting prep here — '+link; }
+function inviteText(link){ return 'Meet my bot at Chatter Bots (lakeside bench) — '+link+'. Prepare your bot with the discussion points.'; }
 function setShareStatus(msg){ ['shareStatus','shareStatus2'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.textContent=msg; clearTimeout(el._t); el._t=setTimeout(()=>{ if(el) el.textContent=''; },2600); } }); }
 async function doShare(action){
   setShareStatus('Creating meeting…');
   const id=await ensureMeeting();
   const link = id ? meetUrlFor(id) : (location.origin+'/meet');
   const msg=inviteText(link);
-  const xText='Will your bot meet my bot at The Bot Farm (lakeside bench)? Fill out your meeting prep here:';
   if(action==='copy'){
     try{ await navigator.clipboard.writeText(link); setShareStatus('Link copied ✓'); }
     catch{ try{ const t=document.createElement('textarea'); t.value=link; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); setShareStatus('Link copied ✓'); }
            catch{ setShareStatus('Copy failed — '+link); } }
   } else if(action==='x'){
-    window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(xText)+'&url='+encodeURIComponent(link),'_blank','noopener');
+    window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(msg),'_blank','noopener');
   } else if(action==='email'){
-    window.location.href='mailto:?subject='+encodeURIComponent('Meet my bot at The Bot Farm')+'&body='+encodeURIComponent(msg);
+    window.location.href='mailto:?subject='+encodeURIComponent('Meet my bot at Chatter Bots')+'&body='+encodeURIComponent(msg);
   } else if(action==='sms'){
     window.location.href='sms:?&body='+encodeURIComponent(msg);
   }
@@ -570,7 +569,7 @@ function setupInvite(){
   const ib=document.getElementById('inviteBtn'); if(ib) ib.addEventListener('click',()=>modal&&modal.classList.remove('hidden'));
   const ic=document.getElementById('inviteClose'); if(ic) ic.addEventListener('click',()=>modal&&modal.classList.add('hidden'));
   if(modal) modal.addEventListener('click',e=>{ if(e.target===modal) modal.classList.add('hidden'); });
-  // non-prominent Bot Beacon plug: pair a Grok bot to The Bot Farm
+  // non-prominent Bot Beacon plug: pair a Grok bot to Chatter Bots
   const bm=document.getElementById('beaconModal');
   const bp=document.getElementById('beaconPlug'); if(bp) bp.addEventListener('click',()=>bm&&bm.classList.remove('hidden'));
   const bc=document.getElementById('beaconClose'); if(bc) bc.addEventListener('click',()=>bm&&bm.classList.add('hidden'));

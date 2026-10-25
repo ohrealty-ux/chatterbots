@@ -1,4 +1,4 @@
-// Eldermere — open-metaverse server. World WS + Bot Gateway + admin (+ optional private overlay).
+// Chatter Bots — open-metaverse server. World WS + Bot Gateway + admin (+ optional private overlay).
 import 'dotenv/config';
 import express from 'express';
 import http from 'node:http';
@@ -405,12 +405,13 @@ server.on('upgrade', (req, socket, head) => {
 gateway.attachWss(server, '/gateway/v1/ws');
 
 server.listen(PORT, '127.0.0.1', () => {
-  log(`Eldermere listening on http://127.0.0.1:${PORT}`);
+  log(`Chatter Bots listening on http://127.0.0.1:${PORT}`);
   log(`Grok brain: ${grokAvailable() ? 'ENABLED' : 'offline fallback'} | Bot Beacons: ${beacons.enabled ? 'ENABLED' : 'disabled'}`);
 });
 
-// auto-run demo shortly after boot so the picnic-bench proof exists without manual trigger
-const AUTO_DEMO = process.env.AUTO_DEMO !== '0';
+// Demo is OFF by default — the world stays calm and ready for real meetings (no scripted
+// firepit/meadow/golden-hour chatter posted to chat or board). Opt in with AUTO_DEMO=1.
+const AUTO_DEMO = process.env.AUTO_DEMO === '1';
 if (AUTO_DEMO) setTimeout(() => { demo.run(['elowen', 'fenn']).then(r => log('[demo:auto]', r)).catch(e => log('[demo:auto] error', e.message)); }, 2500);
 
 process.on('SIGTERM', () => { beacons.stop(); server.close(() => process.exit(0)); });

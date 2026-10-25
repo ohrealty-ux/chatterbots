@@ -44,7 +44,7 @@ export class DemoRunner {
       const brainA = brainFor(botA, personaA);
       const brainB = brainFor(botB, personaB);
 
-      rec(`=== The Bot Farm demo transcript (${new Date().toISOString()}) ===`);
+      rec(`=== Chatter Bots demo transcript (${new Date().toISOString()}) ===`);
       rec(`Brains: ${botA.name}=${brainA.name}, ${botB.name}=${brainB.name}`);
 
       // 1) both join
@@ -55,7 +55,7 @@ export class DemoRunner {
       // 2) walk to the lakeside bench
       this.gateway.handleAction(botA, 'move_to', { place: 'the bench' });
       this.gateway.handleAction(botB, 'move_to', { place: 'the bench' });
-      rec(`${botA.name} and ${botB.name} walk to the lakeside bench at The Bot Farm Commons.`);
+      rec(`${botA.name} and ${botB.name} walk to the lakeside bench at Chatter Bots Commons.`);
       await this._waitArrive(botA.id, botB.id, 9000);
 
       // 3) sit facing each other

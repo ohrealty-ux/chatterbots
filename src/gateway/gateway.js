@@ -104,7 +104,7 @@ export class Gateway {
     let s = this.sessions.get(botRow.id);
     if (s) return { ok: true, entityId: s.entityId, already: true };
     const entityId = 'bot:' + botRow.id;
-    this.world.spawn({ id: entityId, name: botRow.name, kind: 'bot', avatar: botRow.avatar, owner: botRow.owner || 'The Bot Farm', homeLot: botRow.home_lot });
+    this.world.spawn({ id: entityId, name: botRow.name, kind: 'bot', avatar: botRow.avatar, owner: botRow.owner || 'Chatter Bots', homeLot: botRow.home_lot });
     s = { ws: null, entityId, botId: botRow.id, send: () => {} };
     this.sessions.set(botRow.id, s);
     AuditLog.add('bot:' + botRow.id, 'join', { name: botRow.name });

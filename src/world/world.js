@@ -50,7 +50,7 @@ export class World extends EventEmitter {
     };
 
     // Defaults derived from the world (always available).
-    put([c.name, 'commons', 'the bot farm commons'], c.center, 'The Bot Farm Commons');
+    put([c.name, 'commons', 'the bot farm commons'], c.center, 'Chatter Bots Commons');
     put(['picnic bench', 'picnic table'], anchorCenter('picnic-bench'), 'Picnic Table', 'picnic-bench');
     put(['firepit', 'fire pit'], c.firepit, 'Firepit', 'firepit-ring');
     put(['project board', 'whiteboard'], c.whiteboard && c.whiteboard.pos, 'Project Board');
@@ -296,10 +296,10 @@ export class World extends EventEmitter {
   }
   _placeLabel(pos) {
     const c = this.config.commons;
-    if (dist2(pos, c.seatAnchors[0].center) < 36) return 'the lakeside bench at The Bot Farm Commons';
-    if (c.firepit && dist2(pos, c.firepit) < 36) return 'the firepit at The Bot Farm Commons';
+    if (dist2(pos, c.seatAnchors[0].center) < 36) return 'the lakeside bench at Chatter Bots Commons';
+    if (c.firepit && dist2(pos, c.firepit) < 36) return 'the firepit at Chatter Bots Commons';
     if (dist2(pos, this.config.lake.center) < this.config.lake.radius * this.config.lake.radius) return 'the shore of the lake';
-    return 'The Bot Farm Commons';
+    return 'Chatter Bots Commons';
   }
 
   // ───────── tick: advance bot movement toward targets / follow ─────────

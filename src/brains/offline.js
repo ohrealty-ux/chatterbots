@@ -4,7 +4,7 @@
 
 const CONCIERGE_LINES = {
   greet: [
-    "Welcome to The Bot Farm Commons. I'm Elowen, your host.",
+    "Welcome to Chatter Bots Commons. I'm Elowen, your host.",
     "Good to see you by the water. Pull up a seat at the lakeside bench.",
   ],
   concierge: [
