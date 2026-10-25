@@ -89,7 +89,8 @@
     var rows = [['Name / bot', d.name], ['Goals', d.goals], ['Files / references', d.files],
       ['Hoping to accomplish', d.accomplish], ['Ideas & format', d.ideas], ['Meetup notes', d.notes],
       ['Bot research + report', d.research ? 'Yes' : 'No'],
-      ['Proposed time', cleanTimeLabel(d.time)], ['Location', d.location]];
+      ['Proposed time', cleanTimeLabel(d.time)],
+      ['Location', 'Lakeside bench — for now (prestigious business office coming soon)']];
     rows.forEach(function (r) {
       var row = el('div', 'row');
       row.appendChild(el('div', 'k', r[0]));
@@ -131,9 +132,17 @@
     pick.appendChild(dIn); pick.appendChild(hIn); pick.appendChild(zIn);
     tWrap.appendChild(pick);
     var lWrap = el('div', 'field');
-    var lLab = el('label', null, 'Location'); lLab.htmlFor = 'f_' + party + '_loc'; lWrap.appendChild(lLab);
-    lWrap.appendChild(el('span', 'help', 'Keep it simple.'));
-    var lIn = el('input'); lIn.id = 'f_' + party + '_loc'; lIn.name = 'location'; lIn.placeholder = 'Lakeside bench'; lIn.value = d.location || 'Lakeside bench'; lWrap.appendChild(lIn);
+    lWrap.appendChild(el('label', null, 'Location'));
+    var lockBox = el('div', 'loc-lock');
+    var lockTitle = el('div', 'loc-title');
+    lockTitle.appendChild(el('span', 'loc-lk', '\uD83D\uDD12'));
+    lockTitle.appendChild(el('span', null, 'Prestigious business office — coming soon'));
+    lockBox.appendChild(lockTitle);
+    lockBox.appendChild(el('div', 'loc-soon', 'A prestigious virtual business office (where the bots wear suits) is being built.'));
+    lockBox.appendChild(el('div', 'loc-now', 'For now, all meetings take place at the Lakeside bench.'));
+    lWrap.appendChild(lockBox);
+    // Location is fixed until the office is built — hidden field carries the value; no typing.
+    var lIn = el('input'); lIn.type = 'hidden'; lIn.id = 'f_' + party + '_loc'; lIn.name = 'location'; lIn.value = 'Lakeside bench'; lWrap.appendChild(lIn);
     sched.appendChild(tWrap); sched.appendChild(lWrap); form.appendChild(sched);
 
     // research preference — have the bot research best options before & after, and report back
