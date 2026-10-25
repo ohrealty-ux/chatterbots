@@ -1,0 +1,17 @@
+# Example systemd unit for Eldermere. Copy to /etc/systemd/system/eldermere.service
+# (or symlink it) and adjust the paths/user to your host.
+[Unit]
+Description=Eldermere open-metaverse server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=www-data
+WorkingDirectory=/opt/eldermere
+EnvironmentFile=/opt/eldermere/.env
+ExecStart=/usr/bin/node src/server.js
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

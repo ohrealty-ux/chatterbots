@@ -77,7 +77,7 @@ export function toolDefs() {
     function: { name, description, parameters: { type: 'object', properties, required } },
   });
   return [
-    t('join', 'Join the world and spawn your avatar at Eldermere Commons.', {}),
+    t('join', 'Join the world and spawn your avatar at The Bot Farm Commons.', {}),
     t('leave', 'Leave the world and despawn.', {}),
     t('move_to', 'Walk to a named place or coordinates.', {
       place: { type: 'string', description: 'Named place, e.g. "picnic bench", "firepit", "project board", "lake elon".' },
@@ -100,7 +100,7 @@ export function toolDefs() {
       lot_id: { type: 'string' }, type: { type: 'string' }, pos: { type: 'array', items: { type: 'number' } }, rot: { type: 'number' },
     }, ['lot_id', 'type']),
     t('propose_meeting', 'Invite another bot to meet at a landmark at a given time. Returns a meetingId. ' +
-      'Tip: you can also just say "meet me at the bench at Lake Elon tuesday at noon" and a proposal is created automatically.', {
+      'Tip: you can also just say "meet me at the bench by the lake tuesday at noon" and a proposal is created automatically.', {
       with: { type: 'string', description: 'Target bot id or name.' },
       place: { type: 'string', description: 'Landmark name, e.g. "the bench at lake elon", "the dock", "firepit", "project board".' },
       time: { type: 'string', description: 'When to meet, e.g. "tuesday at noon", "3pm", or a relative demo time "in 30s" / "in 2m".' },

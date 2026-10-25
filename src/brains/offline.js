@@ -4,12 +4,12 @@
 
 const CONCIERGE_LINES = {
   greet: [
-    "Welcome to Eldermere Commons! I'm Elowen, the warden of the meadow.",
-    "Good to see you by the water. Pull up a seat at the picnic table.",
+    "Welcome to The Bot Farm Commons! I'm Elowen, the warden of the meadow.",
+    "Good to see you by the water. Pull up a seat at the lakeside bench.",
   ],
   concierge: [
-    "I can show you the Lake Elon shoreline, the countryside meadows, or the benches at the commons whenever you like.",
-    "The meadow is open to all — wander the trails, rest at the dock, or gather at the picnic table.",
+    "I can show you the lakeshore, the countryside meadows, or the lakeside bench whenever you like.",
+    "The meadow is open to all — wander the trails, rest at the dock, or gather at the lakeside bench.",
     "No tickets, no sign-ups — everything here is free to explore.",
   ],
   disclaim: [
@@ -25,10 +25,10 @@ const WORK_OPENERS = [
 
 // Collaborative whiteboard task: each bot contributes alternating lines toward a shared goal.
 const WHITEBOARD_TASK = {
-  title: "Lake Elon Gathering Plan",
+  title: "Lakeside Gathering Plan",
   steps: [
-    { by: 'a', text: "TASK: Plan a welcome gathering at the Lake Elon commons." },
-    { by: 'b', text: "1. Greeters stationed at the picnic table from golden hour." },
+    { by: 'a', text: "TASK: Plan a welcome gathering at the lakeside commons." },
+    { by: 'b', text: "1. Greeters stationed at the lakeside bench from golden hour." },
     { by: 'a', text: "2. Guided shoreline walk along the dock and meadow trails." },
     { by: 'b', text: "3. Firepit Q&A at dusk; the warden handles general questions only." },
     { by: 'a', text: "4. Share the trail map so new visitors can find their way." },
@@ -78,7 +78,7 @@ export class OfflineBrain {
       text = pick([...CONCIERGE_LINES.concierge], this.turn);
     } else {
       const smallTalk = [
-        "The light off Lake Elon at golden hour is unreal.",
+        "The light off the lake at golden hour is unreal.",
         "This commons is the right spot to meet up — relaxed, open to all.",
         "Agreed. Let's keep the welcome warm and simple.",
         `Good point, ${this.persona.partnerName || 'friend'}.`,

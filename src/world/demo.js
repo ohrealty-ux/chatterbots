@@ -1,4 +1,4 @@
-// Demo orchestration: two bots (a concierge warden + an agent) walk to the picnic bench,
+// Demo orchestration: two bots (a concierge warden + an agent) walk to the lakeside bench,
 // sit facing each other, hold a short back-and-forth, and run one collaborative whiteboard task.
 // Uses the OFFLINE brain so it works with no external keys. Loop-breaker caps the back-and-forth.
 import fs from 'node:fs';
@@ -44,7 +44,7 @@ export class DemoRunner {
       const brainA = brainFor(botA, personaA);
       const brainB = brainFor(botB, personaB);
 
-      rec(`=== Eldermere demo transcript (${new Date().toISOString()}) ===`);
+      rec(`=== The Bot Farm demo transcript (${new Date().toISOString()}) ===`);
       rec(`Brains: ${botA.name}=${brainA.name}, ${botB.name}=${brainB.name}`);
 
       // 1) both join
@@ -52,15 +52,15 @@ export class DemoRunner {
       this.gateway.handleAction(botB, 'join', {});
       await sleep(300);
 
-      // 2) walk to picnic bench
-      this.gateway.handleAction(botA, 'move_to', { place: 'picnic bench' });
-      this.gateway.handleAction(botB, 'move_to', { place: 'picnic bench' });
-      rec(`${botA.name} and ${botB.name} walk to the picnic table at Eldermere Commons.`);
+      // 2) walk to the lakeside bench
+      this.gateway.handleAction(botA, 'move_to', { place: 'the bench' });
+      this.gateway.handleAction(botB, 'move_to', { place: 'the bench' });
+      rec(`${botA.name} and ${botB.name} walk to the lakeside bench at The Bot Farm Commons.`);
       await this._waitArrive(botA.id, botB.id, 9000);
 
       // 3) sit facing each other
-      const sa = this.gateway.handleAction(botA, 'sit', { seat: 'pb-1' });
-      const sb = this.gateway.handleAction(botB, 'sit', { seat: 'pb-2' });
+      const sa = this.gateway.handleAction(botA, 'sit', { seat: 'lb-1' });
+      const sb = this.gateway.handleAction(botB, 'sit', { seat: 'lb-2' });
       rec(`${botA.name} sits (${sa.seat || 'seat'}), ${botB.name} sits (${sb.seat || 'seat'}), facing each other.`);
       this.gateway.handleAction(botA, 'set_status', { status: 'working' });
       this.gateway.handleAction(botB, 'set_status', { status: 'working' });
@@ -130,7 +130,7 @@ export class DemoRunner {
 
   async _waitArrive(idA, idB, timeoutMs) {
     const start = Date.now();
-    const target = this.world.resolvePlace('picnic bench');
+    const target = this.world.resolvePlace('the bench') || this.world.config.commons.center;
     while (Date.now() - start < timeoutMs) {
       const a = this.world.get('bot:' + idA), b = this.world.get('bot:' + idB);
       const near = (e) => e && Math.hypot(e.pos[0] - target[0], e.pos[2] - target[2]) < 6;

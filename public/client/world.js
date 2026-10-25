@@ -346,27 +346,13 @@ function buildMountains(){
     const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:col,fog:true,side:THREE.DoubleSide})); scene.add(m); mountains.push(m); }
 }
 
-// ───────── commons props: picnic table, firepit, benches, whiteboard, name signs ─────────
+// ───────── commons props: a single lakeside meeting bench + stone path ─────────
 const seatMarkers=new Map(); // slotId -> {pos, mesh}
 function buildCommons(){
-  const wood=new THREE.MeshStandardMaterial({color:'#8a6a42',roughness:0.9});
   const C=CFG.commons;
-  // picnic table
-  const pb=C.seatAnchors.find(s=>s.id==='picnic-bench'); const [px,,pz]=pb.center; const ph=terrainHeight(px,pz);
-  const tableTop=new THREE.Mesh(new THREE.BoxGeometry(3.4,0.14,1.4),wood); tableTop.position.set(px,ph+0.95,pz); tableTop.castShadow=true; scene.add(tableTop);
-  [[-1.5,-0.6],[1.5,0.6]].forEach(([ox])=>{ const leg=new THREE.Mesh(new THREE.BoxGeometry(0.14,0.95,1.3),wood); leg.position.set(px+ox,ph+0.47,pz); scene.add(leg);});
-  pb.slots.forEach(sl=>{ const bh=terrainHeight(sl.pos[0],sl.pos[2]); const b=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.12,0.4),wood); b.position.set(sl.pos[0],bh+0.5,sl.pos[2]); b.castShadow=true; scene.add(b); addSeatMarker(sl.id,[sl.pos[0],bh+0.55,sl.pos[2]]); });
-  // (firepit removed by design — meadow kept clean and natural)
-  // lakeside bench
-  const lb=C.seatAnchors.find(s=>s.id==='lakeside-bench'); const [lx,,lz]=lb.center; const lh=terrainHeight(lx,lz);
-  const seat=new THREE.Mesh(new THREE.BoxGeometry(2.4,0.12,0.5),wood); seat.position.set(lx,lh+0.5,lz); scene.add(seat);
-  lb.slots.forEach(sl=>{ const bh=terrainHeight(sl.pos[0],sl.pos[2]); addSeatMarker(sl.id,[sl.pos[0],bh+0.55,sl.pos[2]]); });
-  // wooden picnic bench beside the dock, facing the water
-  (function(){ const bx=13.5,bz=43,bh=terrainHeight(bx,bz);
-    const seat=new THREE.Mesh(new THREE.BoxGeometry(2.8,0.14,0.62),wood); seat.position.set(bx,bh+0.5,bz); seat.castShadow=true; scene.add(seat);
-    const back=new THREE.Mesh(new THREE.BoxGeometry(2.8,0.52,0.1),wood); back.position.set(bx,bh+0.82,bz+0.28); back.castShadow=true; scene.add(back);
-    [-1.2,1.2].forEach(ox=>{ const lg=new THREE.Mesh(new THREE.BoxGeometry(0.14,0.5,0.56),wood); lg.position.set(bx+ox,bh+0.25,bz); scene.add(lg); }); })();
-  // a nice stone path winding from the spawn clearing down to the dock/picnic area
+  // The single lakeside meeting bench — beside the dock, on the shore, facing the water.
+  buildMeetingBench(C);
+  // a nice stone path winding from the spawn clearing down to the dock/shore (kept open, not blocked)
   (function(){ const stone=new THREE.MeshStandardMaterial({color:'#9a9aa0',roughness:0.98}),
                      stoneDk=new THREE.MeshStandardMaterial({color:'#83838a',roughness:0.98});
     const from=[10.5,56.5], to=[9,40.5], steps=18;
@@ -377,18 +363,42 @@ function buildCommons(){
       const r=0.5+RND()*0.28;
       const st=new THREE.Mesh(new THREE.CylinderGeometry(r,r,0.1,7), i%2?stone:stoneDk);
       st.position.set(x,h+0.04,z); st.rotation.y=RND()*6; st.scale.set(1,1,0.8+RND()*0.4); st.receiveShadow=true; scene.add(st); } })();
-  // whiteboard / project board
-  const [bx,,bz]=C.whiteboard.pos; const bh=terrainHeight(bx,bz);
-  const board=new THREE.Mesh(new THREE.BoxGeometry(3,2,0.12),new THREE.MeshStandardMaterial({color:'#f4f4ee'})); board.position.set(bx,bh+2,bz); board.rotation.y=C.whiteboard.facing; board.castShadow=true; scene.add(board);
-  const frame=new THREE.Mesh(new THREE.BoxGeometry(3.2,2.2,0.1),new THREE.MeshStandardMaterial({color:CFG.palette.gold})); frame.position.set(bx,bh+2,bz-0.02); frame.rotation.y=C.whiteboard.facing; scene.add(frame);
-  // flagship HQ marker on far shore
-  const hq=new THREE.Mesh(new THREE.BoxGeometry(10,8,8),new THREE.MeshStandardMaterial({color:'#2a2f3a'})); const hx=-120,hz=-120; hq.position.set(hx,terrainHeight(hx,hz)+4,hz); hq.castShadow=true; scene.add(hq);
 }
-// ───────── wooden meeting dock: lies over the water by the picnic bench ─────────
+
+// A single, well-proportioned wooden bench: seat + backrest + legs + a soft contact shadow.
+// Long axis runs east–west (parallel to the shore); seats face local -z (toward the lake).
+// Each seat half is clickable and registers into seatMarkers so visitors can click to sit — no gold ring.
+function buildMeetingBench(C){
+  const lb=(C.seatAnchors||[]).find(s=>s.id==='lakeside-bench'); if(!lb) return;
+  const [cx,,cz]=lb.center; const gh=terrainHeight(cx,cz);
+  const wood=new THREE.MeshStandardMaterial({color:'#9a7342',roughness:0.8});
+  const woodDk=new THREE.MeshStandardMaterial({color:'#7a5730',roughness:0.88});
+  const g=new THREE.Group(); g.position.set(cx,gh,cz); g.rotation.y=(lb.facing||0); scene.add(g);
+  const LEN=3.0, DEPTH=0.6, SEATY=0.5;
+  // soft contact shadow (flattened translucent disc under the bench)
+  const shadow=new THREE.Mesh(new THREE.CircleGeometry(1.9,28), new THREE.MeshBasicMaterial({color:0x100d06,transparent:true,opacity:0.26,depthWrite:false}));
+  shadow.rotation.x=-Math.PI/2; shadow.position.set(0,0.03,0.05); shadow.scale.set(1,0.6,1); g.add(shadow);
+  // two seat halves (each clickable → its own slot id)
+  lb.slots.forEach((sl,idx)=>{ const side=(idx===0?-1:1);
+    const half=new THREE.Mesh(new THREE.BoxGeometry(LEN/2-0.04,0.12,DEPTH),wood);
+    half.position.set(side*(LEN/4+0.01),SEATY,0); half.castShadow=true; half.receiveShadow=true;
+    half.userData.seatId=sl.id; g.add(half);
+    seatMarkers.set(sl.id,{pos:[cx+side*(LEN/4),gh+SEATY,cz],mesh:half}); });
+  // backrest: two horizontal rails on the +z (back) edge, behind the sitter
+  const bz=DEPTH/2-0.05;
+  [SEATY+0.5,SEATY+0.24].forEach(y=>{ const rail=new THREE.Mesh(new THREE.BoxGeometry(LEN,0.1,0.08),wood); rail.position.set(0,y,bz); rail.castShadow=true; g.add(rail); });
+  [-1,1].forEach(s=>{ const post=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.72,0.1),woodDk); post.position.set(s*(LEN/2-0.1),SEATY+0.3,bz); post.castShadow=true; g.add(post); });
+  // front apron under the seat lip
+  const apron=new THREE.Mesh(new THREE.BoxGeometry(LEN,0.1,0.06),woodDk); apron.position.set(0,SEATY-0.1,-DEPTH/2+0.07); g.add(apron);
+  // four sturdy legs
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>{ const leg=new THREE.Mesh(new THREE.BoxGeometry(0.12,SEATY,0.12),woodDk);
+    leg.position.set(sx*(LEN/2-0.2),SEATY/2-0.02,sz*(DEPTH/2-0.1)); leg.castShadow=true; g.add(leg); });
+}
+// ───────── wooden meeting dock: extends over the water, beside the shore bench ─────────
 function buildDock(){
   const wood=new THREE.MeshStandardMaterial({color:'#9a7342',roughness:0.85});
   const woodDark=new THREE.MeshStandardMaterial({color:'#7d5a30',roughness:0.9});
-  const anchor=[8,38.6];                      // just inland of the picnic bench
+  const anchor=[8,38.6];                      // dock root on the shore
   const cx=LAKE.center[0], cz=LAKE.center[2];
   let dx=cx-anchor[0], dz=cz-anchor[1]; const dl=Math.hypot(dx,dz); dx/=dl; dz/=dl;   // toward water
   const px=-dz, pz=dx;                          // perpendicular (deck width axis)
@@ -413,9 +423,6 @@ function buildDock(){
   const tb=anchor[0]+px*3.4, tbz=anchor[1]+pz*3.4;
   if(terrainHeight(tb,tbz)>0.1){ const tg=treeMesh(1); tg.position.set(tb,terrainHeight(tb,tbz),tbz); tg.scale.setScalar(1.25); scene.add(tg); }
 }
-function addSeatMarker(id,pos){ const m=new THREE.Mesh(new THREE.RingGeometry(0.4,0.55,16),new THREE.MeshBasicMaterial({color:CFG.palette.gold,transparent:true,opacity:0.5,side:THREE.DoubleSide}));
-  m.rotation.x=-Math.PI/2; m.position.set(pos[0],pos[1]-0.4,pos[2]); m.userData.seatId=id; scene.add(m); seatMarkers.set(id,{pos,mesh:m}); }
-
 
 // ───────── avatars ─────────
 const _avTexCache=new Map();
@@ -449,7 +456,7 @@ function ensurePlate(id,data){
   const plate=document.createElement('div'); plate.className='plate'+(data.kind==='bot'?' bot':'');
   const nm=document.createElement('span'); nm.className='nm'; nm.textContent=data.name; plate.appendChild(nm);
   if(data.kind==='bot'){ const tag=document.createElement('span'); tag.className='tag'; tag.textContent='BOT'; nm.appendChild(tag);
-    const owner=document.createElement('span'); owner.className='owner'; owner.textContent='by '+(data.owner||'Eldermere'); plate.appendChild(owner); }
+    const owner=document.createElement('span'); owner.className='owner'; owner.textContent='by '+(data.owner||'The Bot Farm'); plate.appendChild(owner); }
   const st=document.createElement('span'); st.className='status st-'+(data.status||'idle'); st.textContent=''; plate.appendChild(st);
   const bubble=document.createElement('span'); bubble.className='bubble'; bubble.style.display='none'; plate.appendChild(bubble);
   platesRoot.appendChild(plate);
@@ -505,13 +512,42 @@ function setupInput(){
   const cf=document.getElementById('chatform'); cf.addEventListener('submit',e=>{ e.preventDefault(); const i=document.getElementById('chatinput');
     const t=i.value.trim(); if(t&&ws&&ws.readyState===1){ ws.send(JSON.stringify({type:'say',text:t})); } i.value=''; i.blur(); });
   document.getElementById('muteBtn').addEventListener('click',toggleMute);
-  document.getElementById('helpBtn').addEventListener('click',()=>alert('WASD/arrows move · drag mouse (click to lock) to look · click gold ring to sit · Space to stand · click a bot to greet · type to chat with people nearby. Phones: use the stick + drag to look.'));
+  document.getElementById('helpBtn').addEventListener('click',()=>alert('WASD/arrows move · drag mouse (click to lock) to look · click the bench to sit · Space to stand · click a bot to greet · type to chat with people nearby. Phones: use the stick + drag to look.'));
   document.getElementById('boardToggle').addEventListener('click',()=>{ const p=document.getElementById('boardpanel'); p.classList.toggle('hidden'); if(!p.classList.contains('hidden')) refreshBoard(); });
   // touch look + joystick
   if(isTouch()){ document.getElementById('stick').classList.remove('hidden'); setupTouch(); }
   // join
   document.getElementById('enterBtn').addEventListener('click',enter);
   document.getElementById('guestname').addEventListener('keydown',e=>{ if(e.key==='Enter') enter(); });
+  // invite / share flow
+  setupInvite();
+}
+
+// ───────── invite / share: one meeting link, four simple actions ─────────
+function inviteLink(){ return window.location.href; }
+function inviteText(){ return 'Meet my bot at The Bot Farm (lakeside bench) — '+inviteLink()+'. Prepare your bot with the discussion points.'; }
+function setShareStatus(msg){ ['shareStatus','shareStatus2'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.textContent=msg; clearTimeout(el._t); el._t=setTimeout(()=>{ if(el) el.textContent=''; },2600); } }); }
+async function doShare(action){
+  const link=inviteLink(), msg=inviteText();
+  const xText='Meet my bot at The Bot Farm (lakeside bench). Prepare your bot with the discussion points.';
+  if(action==='copy'){
+    try{ await navigator.clipboard.writeText(link); setShareStatus('Link copied ✓'); }
+    catch{ try{ const t=document.createElement('textarea'); t.value=link; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); setShareStatus('Link copied ✓'); }
+           catch{ setShareStatus('Copy failed — '+link); } }
+  } else if(action==='x'){
+    window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(xText)+'&url='+encodeURIComponent(link),'_blank','noopener');
+  } else if(action==='email'){
+    window.location.href='mailto:?subject='+encodeURIComponent('Meet my bot at The Bot Farm')+'&body='+encodeURIComponent(msg);
+  } else if(action==='sms'){
+    window.location.href='sms:?&body='+encodeURIComponent(msg);
+  }
+}
+function setupInvite(){
+  document.querySelectorAll('.share-btn').forEach(b=>b.addEventListener('click',()=>doShare(b.dataset.share)));
+  const modal=document.getElementById('invitemodal');
+  const ib=document.getElementById('inviteBtn'); if(ib) ib.addEventListener('click',()=>modal&&modal.classList.remove('hidden'));
+  const ic=document.getElementById('inviteClose'); if(ic) ic.addEventListener('click',()=>modal&&modal.classList.add('hidden'));
+  if(modal) modal.addEventListener('click',e=>{ if(e.target===modal) modal.classList.add('hidden'); });
 }
 function isTouch(){ return matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window; }
 function enter(){ myName=(document.getElementById('guestname').value||'Guest').slice(0,24)||'Guest';

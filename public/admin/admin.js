@@ -1,5 +1,5 @@
 // Admin console. All rendering via textContent (no innerHTML with server data).
-let PW = sessionStorage.getItem('ivy_admin_pw') || '';
+let PW = sessionStorage.getItem('eldr_admin_pw') || '';
 const $ = s => document.querySelector(s);
 const hdr = () => ({ 'Content-Type': 'application/json', Authorization: 'Bearer ' + PW });
 
@@ -11,7 +11,7 @@ async function api(path, method = 'GET', body) {
 async function login() {
   PW = $('#pw').value;
   const j = await api('/admin/api/state');
-  if (j.ok) { sessionStorage.setItem('ivy_admin_pw', PW); $('#login').style.display = 'none'; $('#panel').style.display = 'block'; render(j); setInterval(refresh, 5000); }
+  if (j.ok) { sessionStorage.setItem('eldr_admin_pw', PW); $('#login').style.display = 'none'; $('#panel').style.display = 'block'; render(j); setInterval(refresh, 5000); }
   else { $('#loginMsg').textContent = 'Wrong password.'; $('#loginMsg').style.color = '#ffb24a'; }
 }
 async function refresh() { const j = await api('/admin/api/state'); if (j.ok) render(j); }

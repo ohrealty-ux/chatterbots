@@ -75,3 +75,30 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0b1026; color:#ff
 
 /* landing lede — states what Eldermere is */
 .join-card .lede{ font-size:1.05rem; font-weight:600; color:#efe7d2; margin:.2rem 0 .5rem; letter-spacing:.2px; }
+
+
+/* ───────── home copy ───────── */
+.join-card .desc{ font-size:.9rem; line-height:1.5; color:#e7e9ee; margin:.4rem 0 1rem; text-align:left; }
+
+/* ───────── invite / share flow (high contrast, large, few words) ───────── */
+.invite-block{ background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22);
+  border-radius:14px; padding:14px 14px 12px; margin:6px 0 16px; }
+.invite-prompt{ font-size:1rem; font-weight:800; color:#ffffff; margin:0 0 10px; text-align:center; letter-spacing:.2px; }
+.share-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.share-btn{ width:100%; padding:14px 10px; border:none; border-radius:11px; cursor:pointer;
+  background:#ffffff; color:#14181f; font-weight:800; font-size:.95rem; line-height:1;
+  box-shadow:0 2px 8px rgba(0,0,0,.35); transition:transform .06s ease, filter .12s ease; }
+.share-btn:hover{ filter:brightness(.94); }
+.share-btn:active{ transform:translateY(1px); }
+.share-status{ min-height:1em; margin:10px 0 0; font-size:.82rem; font-weight:700; color:#8ff0a6; text-align:center; }
+
+/* Invite modal — reopened from the HUD */
+#invitemodal{ z-index:30; }
+.invite-card{ background:#141926; border:1px solid rgba(255,255,255,.22); border-radius:18px;
+  padding:26px 24px 20px; max-width:420px; width:100%; text-align:center; box-shadow:0 24px 70px rgba(0,0,0,.6); }
+.invite-card h2{ font-size:1.15rem; font-weight:800; color:#ffffff; margin:0 0 16px; letter-spacing:.2px; }
+.invite-card .close-btn{ margin-top:16px; width:100%; padding:13px; border:none; border-radius:11px; cursor:pointer;
+  background:#2b3344; color:#ffffff; font-weight:800; font-size:.95rem; }
+.invite-card .close-btn:hover{ filter:brightness(1.12); }
+
+@media(max-width:420px){ .share-row{ grid-template-columns:1fr; } }

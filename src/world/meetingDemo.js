@@ -48,7 +48,7 @@ async function main() {
   const rec = (line) => { transcript.push(line); console.log('[meeting-demo] ' + line); fs.writeFileSync(file, transcript.join('\n') + '\n'); };
   rendezvous.on('log', ({ line }) => rec(line));
 
-  rec(`=== Eldermere RENDEZVOUS demo transcript (${new Date().toISOString()}) ===`);
+  rec(`=== The Bot Farm RENDEZVOUS demo transcript (${new Date().toISOString()}) ===`);
   rec(`Both bots use the OFFLINE brain (no API key required).`);
 
   // 5) Make sure both bots are in the world.
@@ -58,7 +58,7 @@ async function main() {
   gateway.handleAction(botA, 'join', {});
   gateway.handleAction(botB, 'join', {});
 
-  // 6) Bot A proposes a meeting to bot B "at the bench at Lake Elon", a few seconds out.
+  // 6) Bot A proposes a meeting to bot B "at the bench by the lake", a few seconds out.
   rec(`--- Proposing meeting ---`);
   const prop = rendezvous.propose({ fromBotId: A, withRef: 'Fenn', place: 'the bench at lake elon', time: 'in 3s' });
   if (!prop.ok) { rec(`[fatal] propose failed: ${prop.error}`); process.exit(1); }
