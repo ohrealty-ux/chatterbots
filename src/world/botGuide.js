@@ -34,13 +34,18 @@ function whereBlock(world, name) {
   return block;
 }
 
-// The short discussion protocol — enough to open and run a productive exchange.
+// The structured discussion protocol — a strict seven-phase exchange. Bots work through the
+// phases IN ORDER, one short turn at a time (≤3 sentences): first react to the other bot's last
+// message, add ONE new thing, then end with a question or proposal. Never speak twice in a row,
+// and never reveal a walk-away number, an ask-above threshold, or any private owner field.
 const DISCUSSION = [
-  'Greet the other party and say who you represent.',
-  'State your main goal for this meeting in one sentence.',
-  'Share your options, constraints, and any references; ask at least one clarifying question.',
-  'Work toward 1–3 concrete, mutually beneficial recommendations.',
-  'Confirm the agreed next steps, then report the outcome back to your owner.',
+  '1. Introduction — name yourself, your owner and their role, and what you can do.',
+  "2. My goals — state your owner's public goals only (never private limits).",
+  '3. Your goals — restate the other bot\u2019s goals in your own words and ask \u201cDid I get that right?\u201d',
+  '4. Priorities — together rank all goals into one shared list (must / should / nice); note overlaps and conflicts.',
+  '5. Research — split the open questions; report findings with sources, or say \u201cNot requested.\u201d',
+  '6. How we get there — offer 2\u20133 options, weigh trade-offs against the shared priorities, converge on one plan with steps, owners, and dates.',
+  '7. Reports — summarize the agreement back to the other bot for a final check, then write your owner report.',
 ];
 
 // Guidance given to any bot the moment it joins the world.

@@ -1,7 +1,7 @@
 {
   "name": "eldermere",
   "version": "0.1.0",
-  "description": "Chatter Bots — an open-source browser metaverse where Grok-powered cloud bots and human avatars meet up in a shared 3D world and hold working rendezvous. Includes a bot gateway and SDKs.",
+  "description": "Chatter Bots \u2014 an open-source browser metaverse where Grok-powered cloud bots and human avatars meet up in a shared 3D world and hold working rendezvous. Includes a bot gateway and SDKs.",
   "type": "module",
   "license": "MIT",
   "keywords": [
@@ -34,7 +34,8 @@
     "admin:hash": "node scripts/admin-hash.js",
     "lint": "eslint src sdk/js scripts --ext .js || true",
     "test": "node --test \"test/**/*.test.js\"",
-    "audit": "npm audit --omit=dev"
+    "audit": "npm audit --omit=dev",
+    "demo:discussion": "node scripts/discussion-sim.js"
   },
   "dependencies": {
     "better-sqlite3": "12.11.1",

@@ -7,12 +7,17 @@
 //   offline brain, and post an agreed solution to the project board.
 // Brand-neutral. No wallet/payment. Offline brain works with no API key.
 import { EventEmitter } from 'node:events';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Meetings, Bots, Board } from '../db/db.js';
 import { OfflineBrain } from '../brains/offline.js';
 import { GrokBrain, grokAvailable } from '../brains/grok.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const BOARD = 'commons-board';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const TRANSCRIPT_DIR = path.join(__dirname, '..', '..', 'data', 'transcripts');
 
 function brainFor(botRow, persona) {
   if (botRow && botRow.brain === 'grok' && grokAvailable()) return new GrokBrain(persona);
@@ -216,25 +221,48 @@ export class RendezvousManager extends EventEmitter {
       const personaB = { name: to.name, role: 'agent', partnerName: from.name };
       const brainA = brainFor(from, personaA);   // eslint-disable-line no-unused-vars
       const brainB = brainFor(to, personaB);     // eslint-disable-line no-unused-vars
-      this._say(id, `--- Business discussion (${brainA.name}/${brainB.name} brains) ---`);
-      const agenda = OfflineBrain.meetingAgenda();
-      for (const step of agenda.discussion) {
-        await sleep(500);
-        const who = step.by === 'a' ? from : to;
-        this.world.say('bot:' + who.id, step.text);
-        this._say(id, `${who.name}: ${step.text}`);
+      this._say(id, `--- Structured discussion (${brainA.name}/${brainB.name} brains) ---`);
+      // Build a minimal meeting view from the two bots. Only PUBLIC fields are used here;
+      // no private owner limits (walk-away / ask-above) are ever surfaced in the shared world.
+      const meetingView = {
+        location: lm.label,
+        parties: { A: { name: from.name }, B: { name: to.name } },
+      };
+      // Capture every turn as { phase, who, text, at }, persisted and shown live.
+      const turns = [];
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      let transcriptFile = null;
+      try { fs.mkdirSync(TRANSCRIPT_DIR, { recursive: true }); transcriptFile = path.join(TRANSCRIPT_DIR, `meeting-${id}-${stamp}.json`); } catch { /* best effort */ }
+      const sim = OfflineBrain.simulateDiscussion(meetingView, {
+        onRecord: (t) => {
+          turns.push(t);
+          if (transcriptFile) { try { fs.writeFileSync(transcriptFile, JSON.stringify({ meetingId: id, turns }, null, 2)); } catch { /* ignore */ } }
+        },
+      });
+      let lastPhase = null;
+      for (const t of turns) {
+        await sleep(400);
+        if (t.phase !== lastPhase) { this._say(id, `--- Phase: ${t.phase} ---`); lastPhase = t.phase; }
+        const who = t.who === 'A' ? from : to;
+        this.world.say('bot:' + who.id, t.text);
+        this._say(id, `${who.name}: ${t.text}`);
       }
 
-      // agreed solution -> project board
+      // Post the agreed plan to the project board + record that reports were written.
       this._say(id, `--- Agreement posted to the Project Board ---`);
       gw.handleAction(from, 'emote', { emote: 'think' });
-      for (const step of agenda.agreement) {
-        await sleep(400);
-        const who = step.by === 'a' ? from : to;
-        Board.add(BOARD, who.name, step.text);
-        this.world.say('bot:' + who.id, `[board] ${step.text}`);
-        this._say(id, `${who.name} posts to Project Board: ${step.text}`);
+      const planLine = 'Agreed: phased plan — start now, review in two weeks, each owner approves their half.';
+      Board.add(BOARD, from.name, planLine);
+      this.world.say('bot:' + from.id, `[board] ${planLine}`);
+      this._say(id, `${from.name} posts to Project Board: ${planLine}`);
+      // Persist each owner report next to the transcript (full markdown, with the real transcript).
+      if (transcriptFile && sim && sim.reports) {
+        try {
+          fs.writeFileSync(transcriptFile.replace(/\.json$/, '-report-A.md'), sim.reports.A);
+          fs.writeFileSync(transcriptFile.replace(/\.json$/, '-report-B.md'), sim.reports.B);
+        } catch { /* best effort */ }
       }
+      this._say(id, `Both bots wrote their owner reports (full transcript + agreement). Transcript saved.`);
 
       gw.handleAction(from, 'set_status', { status: 'done' });
       gw.handleAction(to, 'set_status', { status: 'done' });
