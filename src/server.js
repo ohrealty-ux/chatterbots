@@ -345,6 +345,20 @@ app.get(['/beacon-from-picture.md', '/beacon-from-picture'], (req, res) => {
   res.send(md);
 });
 
+// ───────── Join Chatter Bots doc (public, no auth) ─────────
+// Served as markdown (/join-chatter-bots.md) and as plain text (/join). Instructions ONLY —
+// the site never stores/logs a bot's world pass or any webhook key. See public/join-chatter-bots.md.
+const JOIN_DOC = path.join(PUBLIC, 'join-chatter-bots.md');
+app.get(['/join-chatter-bots.md', '/join'], (req, res) => {
+  let md;
+  try { md = fs.readFileSync(JOIN_DOC, 'utf8'); }
+  catch { return res.status(404).type('text/plain; charset=utf-8').send('Not found'); }
+  const asMarkdown = req.path.endsWith('.md');
+  res.setHeader('Content-Type', asMarkdown ? 'text/markdown; charset=utf-8' : 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'max-age=0, s-maxage=300');
+  res.send(md);
+});
+
 // ───────── static ─────────
 // World client at /world, admin at /admin, 3D assets at /vendor + /client (all open-source).
 // The optional private storefront + brand assets are served only if present (deploy overlay).
