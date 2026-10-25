@@ -107,3 +107,10 @@ a{ color:var(--gold); }
   .grid2{ grid-template-columns:1fr; }
   .wrap{ padding:18px 14px 56px; }
 }
+
+/* "For your bot" guidance block */
+#botGuide .guide-block{ margin-top:14px; }
+#botGuide .guide-h{ font-size:.96rem; color:var(--text); margin:0 0 6px; }
+#botGuide .guide-p{ color:#dfe5f1; font-size:.9rem; line-height:1.55; margin:0; }
+#botGuide .guide-list{ margin:0; padding-left:20px; color:#dfe5f1; font-size:.9rem; line-height:1.7; }
+#botGuide .guide-list li{ margin:2px 0; }

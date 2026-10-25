@@ -13,7 +13,7 @@
     { k: 'notes',      label: 'Meetup notes',                        ta: true, help: 'Any basic notes to guide the bots.', ph: 'e.g. Keep it to 15 min; focus on logistics first.' }
   ];
 
-  var meetId = null, meeting = null, editing = { A: false, B: false };
+  var meetId = null, meeting = null, editing = { A: false, B: false }, botGuideData = null;
 
   function $(id) { return document.getElementById(id); }
   function qp(name) { return new URLSearchParams(location.search).get(name); }
@@ -115,7 +115,7 @@
       btn.disabled = true; msg.textContent = 'Saving…'; msg.style.color = '';
       saveParty(meetId, party, prep).then(function (r) {
         btn.disabled = false;
-        if (r && r.ok) { meeting = r.meeting; editing[party] = false; renderParty(party); refreshLink(); }
+        if (r && r.ok) { meeting = r.meeting; editing[party] = false; renderParty(party); refreshLink(); renderBotGuide(); }
         else { msg.textContent = 'Could not save — please try again.'; msg.style.color = '#ff9d7a'; }
       }).catch(function () { btn.disabled = false; msg.textContent = 'Network error — please try again.'; msg.style.color = '#ff9d7a'; });
     });
@@ -142,6 +142,59 @@
   }
 
   function refreshLink() { var i = $('meetLink'); if (i) i.value = meetUrl(); }
+
+  // ---- "For your bot" guidance: where to go + how to open the discussion.
+  // Mirrors exactly what the bot receives from the gateway and GET /api/meet/:id. ----
+  function renderBotGuide() {
+    var host = $('botGuide'); if (!host) return;
+    host.textContent = '';
+    var g = botGuideData || {};
+    var where = g.where || {};
+
+    var head = el('div', 'section-head');
+    head.appendChild(el('h2', null, 'For your bot'));
+    head.appendChild(el('span', 'hint', 'Your bot is given this too — enough to get it moving.'));
+    host.appendChild(head);
+
+    // Where to go
+    var w = el('div', 'guide-block');
+    w.appendChild(el('h3', 'guide-h', '📍 Where to go'));
+    var place = where.label || 'Lakeside Bench';
+    w.appendChild(el('p', 'guide-p', 'Head to the ' + place + '. ' + (where.howto || 'Walk there, then take a seat if one is open and begin.')));
+    host.appendChild(w);
+
+    // How to discuss
+    var steps = (g.discuss && g.discuss.length) ? g.discuss : [
+      'Greet the other party and say who you represent.',
+      'State your main goal for this meeting in one sentence.',
+      'Share options, constraints, and references; ask one clarifying question.',
+      'Work toward 1–3 concrete, mutually beneficial recommendations.',
+      'Confirm next steps, then report the outcome back to your owner.'
+    ];
+    var d = el('div', 'guide-block');
+    d.appendChild(el('h3', 'guide-h', '💬 How to discuss the topic'));
+    var ol = el('ol', 'guide-list');
+    steps.forEach(function (s) { ol.appendChild(el('li', null, s)); });
+    d.appendChild(ol);
+    host.appendChild(d);
+
+    // Topic (from the parties' goals, when submitted)
+    var goals = [];
+    if (meeting && meeting.parties) {
+      ['A', 'B'].forEach(function (p) {
+        var pd = meeting.parties[p];
+        if (pd && pd.goals && String(pd.goals).trim()) goals.push((pd.name || 'Party ' + p) + ': ' + pd.goals);
+      });
+    }
+    if (goals.length) {
+      var t = el('div', 'guide-block');
+      t.appendChild(el('h3', 'guide-h', '🎯 The topic'));
+      var tl = el('ul', 'guide-list');
+      goals.forEach(function (x) { tl.appendChild(el('li', null, x)); });
+      t.appendChild(tl);
+      host.appendChild(t);
+    }
+  }
 
   // ---- bot beacon plug ----
   function setupBeacon() {
@@ -171,9 +224,10 @@
 
     ready.then(function (r) {
       meeting = (r && r.meeting) || { parties: { A: null, B: null }, location: 'Lakeside bench' };
-      refreshLink(); renderParty('A'); renderParty('B');
+      botGuideData = (r && r.guide) || null;
+      refreshLink(); renderBotGuide(); renderParty('A'); renderParty('B');
     }).catch(function () {
-      refreshLink(); renderParty('A'); renderParty('B');
+      refreshLink(); renderBotGuide(); renderParty('A'); renderParty('B');
       setStatus('Could not start a meeting — check your connection.');
     });
   }

@@ -5,6 +5,7 @@ import { WebSocketServer } from 'ws';
 import { Bots, AuditLog } from '../db/db.js';
 import { verifyToken, RateLimiter, WindowCounter } from '../security/security.js';
 import { ACTIONS, dispatch, toolDefs } from './actions.js';
+import { joinGuide } from '../world/botGuide.js';
 
 const EVENTS = ['perception', 'chat_heard', 'mentioned', 'arrived', 'seated', 'entered_lot', 'error'];
 
@@ -35,7 +36,7 @@ export class Gateway {
 
     // OpenAI-compatible tool definitions
     r.get('/v1/tools.json', (_req, res) => res.json({ version: 1, tools: toolDefs() }));
-    r.get('/v1/protocol', (_req, res) => res.json({ version: 1, actions: ACTIONS, events: EVENTS }));
+    r.get('/v1/protocol', (_req, res) => res.json({ version: 1, actions: ACTIONS, events: EVENTS, guide: joinGuide(this.world) }));
 
     const requireBot = (req, res, next) => {
       const bot = this.authBot(req);
@@ -107,7 +108,7 @@ export class Gateway {
     s = { ws: null, entityId, botId: botRow.id, send: () => {} };
     this.sessions.set(botRow.id, s);
     AuditLog.add('bot:' + botRow.id, 'join', { name: botRow.name });
-    return { ok: true, entityId };
+    return { ok: true, entityId, guide: joinGuide(this.world) };
   }
   leave(botId) {
     const s = this.sessions.get(botId);
@@ -144,7 +145,7 @@ export class Gateway {
       const s = this.sessions.get(bot.id);
       s.ws = ws;
       s.send = (obj) => { try { ws.send(JSON.stringify(obj)); } catch { /* closed */ } };
-      s.send({ type: 'welcome', version: 1, entityId: join.entityId, perception: this.world.perceive(join.entityId) });
+      s.send({ type: 'welcome', version: 1, entityId: join.entityId, perception: this.world.perceive(join.entityId), guide: joinGuide(this.world) });
       // periodic perception push
       const perInt = setInterval(() => { if (s.ws === ws) s.send({ type: 'event', event: 'perception', data: this.world.perceive(join.entityId) }); }, 5000);
       perInt.unref?.();

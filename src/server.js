@@ -11,6 +11,7 @@ import { WebSocketServer } from 'ws';
 import { World } from './world/world.js';
 import { Gateway } from './gateway/gateway.js';
 import { RendezvousManager } from './gateway/rendezvous.js';
+import { meetingGuide } from './world/botGuide.js';
 import { DemoRunner } from './world/demo.js';
 import { BotBeacons } from './adapters/botBeacons.js';
 import { grokAvailable } from './brains/grok.js';
@@ -237,7 +238,7 @@ app.get('/api/meet/:id', (req, res) => {
   if (!MEET_ID_RE.test(id)) return res.status(400).json({ ok: false, error: 'bad_id' });
   const m = MeetingPreps.get(id);
   if (!m) return res.status(404).json({ ok: false, error: 'not_found' });
-  res.json({ ok: true, meeting: m });
+  res.json({ ok: true, meeting: m, guide: meetingGuide(m, world) });
 });
 
 app.post('/api/meet/:id', jsonParser, (req, res) => {
