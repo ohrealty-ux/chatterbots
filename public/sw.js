@@ -1,15 +1,15 @@
 /* Chatter Bots service worker — installable PWA shell cache.
    - Precaches ONLY the static shell (html, css, js, icons) in a versioned cache.
-   - Cache-first for those shell assets.
+   - Network-first for those shell assets (fetch fresh, update cache, fall back to cache offline).
    - Network-only for /api, /ws, /admin (never cached).
    - Never caches any request that carries an Authorization header or token.
    - Deletes old caches on activate. */
 'use strict';
 
-const CACHE = 'chatterbots-shell-v1';
+const CACHE = 'chatterbots-shell-v2';
 
 // The static shell. Versioned asset URLs match exactly what the pages request so the
-// cache-first lookup hits. Bump CACHE (and these ?v= values if the pages change) on release.
+// offline fallback lookup hits. Bump CACHE (and these ?v= values if the pages change) on release.
 const SHELL = [
   '/meet',
   '/world',
@@ -50,6 +50,14 @@ function isDynamicPath(url) {
   return p.startsWith('/api') || p.startsWith('/ws') || p.startsWith('/admin');
 }
 
+function hasToken(url) {
+  // Never cache anything that carries a token/key/pairing secret in the query string.
+  for (const k of url.searchParams.keys()) {
+    if (/token|key|pass|code|topic|secret|auth/i.test(k)) return true;
+  }
+  return false;
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   // Only handle same-origin GETs; everything else goes straight to the network.
@@ -57,28 +65,25 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // Never touch dynamic endpoints, and never cache an authenticated request.
-  if (isDynamicPath(url) || req.headers.has('Authorization')) {
+  // Never touch dynamic endpoints, and never cache an authenticated/tokenized request.
+  if (isDynamicPath(url) || req.headers.has('Authorization') || hasToken(url)) {
     event.respondWith(fetch(req));
     return;
   }
 
-  // Cache-first for the static shell. On a cache miss, fetch and cache a copy (but only for
-  // safe, non-authenticated, basic/same-origin responses).
+  // Network-first for the static shell: fetch fresh, update the cache, and fall back to the
+  // cache only when offline. Only cache safe, non-authenticated, basic/same-origin responses.
   event.respondWith(
-    caches.match(req).then((hit) => {
-      if (hit) return hit;
-      return fetch(req).then((res) => {
-        try {
-          const cacheable = res && res.ok && (res.type === 'basic' || res.type === 'default')
-            && !res.headers.has('Authorization');
-          if (cacheable) {
-            const copy = res.clone();
-            caches.open(CACHE).then((cache) => cache.put(req, copy)).catch(() => {});
-          }
-        } catch (_e) { /* ignore */ }
-        return res;
-      }).catch(() => caches.match('/meet'));
-    })
+    fetch(req).then((res) => {
+      try {
+        const cacheable = res && res.ok && (res.type === 'basic' || res.type === 'default')
+          && !res.headers.has('Authorization');
+        if (cacheable) {
+          const copy = res.clone();
+          caches.open(CACHE).then((cache) => cache.put(req, copy)).catch(() => {});
+        }
+      } catch (_e) { /* ignore */ }
+      return res;
+    }).catch(() => caches.match(req).then((hit) => hit || caches.match('/meet')))
   );
 });
