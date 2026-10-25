@@ -61,7 +61,10 @@ async function boot(){
   LAKE={center:CFG.lake.center, radius:CFG.lake.radius, depth:CFG.lake.depth};
   dayPhase=CFG.timeOfDay.startPhase ?? 0.34;
   quality=CFG.quality?.default||'high';
+  // Mobile / touch devices default to MEDIUM for a smooth framerate.
+  if(isTouch()) quality='medium';
   setupRenderer(); buildWorld();
+  if(qualityDiv) qualityDiv.textContent=quality.toUpperCase();
   window.addEventListener('resize',onResize);
   setupInput();
   requestAnimationFrame(loop);
@@ -70,7 +73,8 @@ async function boot(){
 function setupRenderer(){
   const canvas=document.getElementById('scene');
   renderer=new THREE.WebGLRenderer({canvas,antialias:quality!=='low',powerPreference:'high-performance'});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio,quality==='high'?2:1.25));
+  // Cap devicePixelRatio at 1.5 (high) / 1.25 (medium/low) — keeps GPU load sane on retina/mobile.
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,quality==='high'?1.5:1.25));
   renderer.setSize(innerWidth,innerHeight);
   renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
@@ -165,7 +169,7 @@ function grassMaterial(base){
   return m;
 }
 function buildGrass(){
-  const want=quality==='high'?CFG.densities.grassInstances:quality==='medium'?18000:7000;
+  const want=quality==='high'?Math.min(CFG.densities.grassInstances,30000):quality==='medium'?12000:6000;
   const R=CFG.densities.grassRadius;
   const blade=new THREE.PlaneGeometry(0.12,0.9,1,2); blade.translate(0,0.45,0);
   grassMesh=new THREE.InstancedMesh(blade,grassMaterial(CFG.palette.grassA),want);
@@ -209,7 +213,7 @@ function treeMesh(species){
 }
 function buildTrees(){
   const protos=[]; for(let s=0;s<CFG.densities.treeSpecies;s++) protos.push(treeMesh(s));
-  const want=quality==='high'?CFG.densities.treeInstances:quality==='medium'?220:110;
+  const want=quality==='high'?Math.min(CFG.densities.treeInstances,300):quality==='medium'?150:90;
   for(let i=0;i<want;i++){ const a=RND()*Math.PI*2, r=120+RND()*380; const x=10+Math.cos(a)*r, z=48+Math.sin(a)*r;
     if(Math.abs(x)>560||Math.abs(z)>560) continue; const h=terrainHeight(x,z);
     const dl=Math.hypot(x-LAKE.center[0],z-LAKE.center[2]); if(dl<LAKE.radius+6||h<0.2) continue;
@@ -424,6 +428,38 @@ function buildDock(){
   if(terrainHeight(tb,tbz)>0.1){ const tg=treeMesh(1); tg.position.set(tb,terrainHeight(tb,tbz),tbz); tg.scale.setScalar(1.25); scene.add(tg); }
 }
 
+// ───────── Beacon Studio kiosk: a small signpost near the lakeside bench ─────────
+// Clicking (or walking up and clicking) it opens the Beacon Studio panel. Purely a UI entry
+// point — no beacon data lives here. Registered meshes are raycast in handlePick().
+const studioMarkers=[];
+function beaconSignTexture(){
+  const c=document.createElement('canvas'); c.width=256; c.height=160; const x=c.getContext('2d');
+  const grad=x.createLinearGradient(0,0,0,160); grad.addColorStop(0,'#1b2231'); grad.addColorStop(1,'#10151f');
+  x.fillStyle=grad; x.fillRect(0,0,256,160);
+  x.strokeStyle='#D4AF37'; x.lineWidth=5; x.strokeRect(5,5,246,150);
+  x.textAlign='center'; x.fillStyle='#f3d473'; x.font='bold 38px system-ui,Arial'; x.fillText('🛰 Beacon', 128, 58);
+  x.fillStyle='#ffffff'; x.font='bold 34px system-ui,Arial'; x.fillText('Studio', 128, 98);
+  x.fillStyle='#c7cad3'; x.font='500 18px system-ui,Arial'; x.fillText('tap to open', 128, 132);
+  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t;
+}
+function buildBeaconStudio(){
+  const bx=21, bz=43;                         // just east of the bench, on the shore clearing
+  const gh=terrainHeight(bx,bz); if(gh<0.1) return;
+  const g=new THREE.Group(); g.position.set(bx,gh,bz); scene.add(g);
+  const woodDk=new THREE.MeshStandardMaterial({color:'#7a5730',roughness:0.9});
+  // post
+  const post=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.1,2.0,8),woodDk); post.position.y=1.0; post.castShadow=true; g.add(post);
+  // sign board (double-sided, faces the bench/path)
+  const board=new THREE.Mesh(new THREE.BoxGeometry(1.7,1.06,0.08),
+    new THREE.MeshStandardMaterial({map:beaconSignTexture(),emissive:0x1a1710,emissiveIntensity:0.35,roughness:0.6}));
+  board.position.y=2.1; board.rotation.y=Math.PI*0.12; board.castShadow=true; g.add(board);
+  board.userData.studio=true; studioMarkers.push(board);
+  // a soft glowing orb atop the post (echoes the beacon badge)
+  const orb=new THREE.Mesh(new THREE.SphereGeometry(0.14,12,12),
+    new THREE.MeshStandardMaterial({color:0xf3d473,emissive:0xf3d473,emissiveIntensity:1.4})); orb.position.y=2.78; g.add(orb);
+  studioMarkers.push(orb); orb.userData.studio=true; g.userData.studioOrb=orb;
+}
+
 // ───────── avatars ─────────
 const _avTexCache=new Map();
 function avatarMesh(data){
@@ -445,7 +481,7 @@ function loadTex(url){ if(_avTexCache.has(url)) return _avTexCache.get(url); con
 function hashStr(s){ let h=0; for(let i=0;i<(s||'').length;i++) h=(h*31+s.charCodeAt(i))|0; return Math.abs(h); }
 
 function buildWorld(){
-  buildSky(); buildMountains(); buildTerrain(); buildWater(); buildGrass(); buildFlowers(); buildTrees(); buildLife(); buildCommons(); buildDock();
+  buildSky(); buildMountains(); buildTerrain(); buildWater(); buildGrass(); buildFlowers(); buildTrees(); buildLife(); buildCommons(); buildDock(); buildBeaconStudio();
   updateTOD(dayPhase);
 }
 
@@ -456,6 +492,8 @@ function ensurePlate(id,data){
   const plate=document.createElement('div'); plate.className='plate'+(data.kind==='bot'?' bot':'');
   const nm=document.createElement('span'); nm.className='nm'; nm.textContent=data.name; plate.appendChild(nm);
   if(data.kind==='bot'){ const tag=document.createElement('span'); tag.className='tag'; tag.textContent='BOT'; nm.appendChild(tag);
+    // decorative "has a beacon" badge (cosmetic glow only — no real beacon data)
+    if(data.beacon){ const bdg=document.createElement('span'); bdg.className='beacon-badge'; bdg.title='Has a Bot Beacon'; nm.appendChild(bdg); }
     const owner=document.createElement('span'); owner.className='owner'; owner.textContent='by '+(data.owner||'Chatter Bots'); plate.appendChild(owner); }
   const st=document.createElement('span'); st.className='status st-'+(data.status||'idle'); st.textContent=''; plate.appendChild(st);
   const bubble=document.createElement('span'); bubble.className='bubble'; bubble.style.display='none'; plate.appendChild(bubble);
@@ -569,12 +607,25 @@ function setupInvite(){
   const ib=document.getElementById('inviteBtn'); if(ib) ib.addEventListener('click',()=>modal&&modal.classList.remove('hidden'));
   const ic=document.getElementById('inviteClose'); if(ic) ic.addEventListener('click',()=>modal&&modal.classList.add('hidden'));
   if(modal) modal.addEventListener('click',e=>{ if(e.target===modal) modal.classList.add('hidden'); });
-  // non-prominent Bot Beacon plug: pair a Grok bot to Chatter Bots
+  // Beacon Studio: every "Get your Bot Beacon" entry point opens the same panel.
   const bm=document.getElementById('beaconModal');
-  const bp=document.getElementById('beaconPlug'); if(bp) bp.addEventListener('click',()=>bm&&bm.classList.remove('hidden'));
-  const bc=document.getElementById('beaconClose'); if(bc) bc.addEventListener('click',()=>bm&&bm.classList.add('hidden'));
-  if(bm) bm.addEventListener('click',e=>{ if(e.target===bm) bm.classList.add('hidden'); });
+  const bp=document.getElementById('beaconPlug'); if(bp) bp.addEventListener('click',openBeaconStudio);
+  const qb=document.getElementById('qaBeacon'); if(qb) qb.addEventListener('click',openBeaconStudio);
+  const bc=document.getElementById('beaconClose'); if(bc) bc.addEventListener('click',closeBeaconStudio);
+  if(bm) bm.addEventListener('click',e=>{ if(e.target===bm) closeBeaconStudio(); });
+  // Copy button: copies the exact message for the user's Grok bot.
+  const cp=document.getElementById('beaconCopy'); if(cp) cp.addEventListener('click',()=>{
+    const txt=cp.getAttribute('data-copy')||''; const note=document.getElementById('beaconCopied');
+    const done=()=>{ if(note){ note.textContent='Copied ✓ — paste it into your Grok Bot app'; clearTimeout(note._t); note._t=setTimeout(()=>{ note.textContent=''; },3200);} };
+    (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject())
+      .then(done).catch(()=>{ try{ const t=document.createElement('textarea'); t.value=txt; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); done(); }catch{ if(note) note.textContent='Copy failed — select the message manually.'; } });
+  });
+  // quick-action buttons on the join card
+  const qm=document.getElementById('qaMeet'); if(qm) qm.addEventListener('click',async e=>{ e.preventDefault(); const mid=await ensureMeeting(); window.location.href=mid?meetUrlFor(mid):(location.origin+'/meet'); });
+  const qe=document.getElementById('qaEnter'); if(qe) qe.addEventListener('click',()=>{ const gn=document.getElementById('guestname'); if(gn) gn.focus(); });
 }
+function openBeaconStudio(){ const bm=document.getElementById('beaconModal'); if(bm) bm.classList.remove('hidden'); }
+function closeBeaconStudio(){ const bm=document.getElementById('beaconModal'); if(bm) bm.classList.add('hidden'); }
 function isTouch(){ return matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window; }
 function enter(){ myName=(document.getElementById('guestname').value||'Guest').slice(0,24)||'Guest';
   document.getElementById('join').classList.add('hidden'); document.getElementById('hud').classList.remove('hidden');
@@ -701,6 +752,6 @@ function updatePlates(){ for(const e of remote.values()){ if(!e.mesh||!e.plate) 
   if(tmpV.z>1){ e.plate.style.display='none'; continue; } e.plate.style.display='block';
   e.plate.style.left=((tmpV.x*0.5+0.5)*innerWidth)+'px'; e.plate.style.top=((-tmpV.y*0.5+0.5)*innerHeight)+'px';
   const d=camera.position.distanceTo(e.mesh.position); e.plate.style.opacity=d>60?0:1; } }
-function stepDown(){ quality='medium'; qualityDiv.textContent='MEDIUM (auto)'; renderer.setPixelRatio(Math.min(devicePixelRatio,1.25)); if(grassMesh) grassMesh.count=Math.min(grassCount,18000); lowFps=0; }
+function stepDown(){ quality='medium'; qualityDiv.textContent='MEDIUM (auto)'; renderer.setPixelRatio(Math.min(devicePixelRatio,1.25)); if(grassMesh) grassMesh.count=Math.min(grassCount,12000); lowFps=0; }
 
 boot();

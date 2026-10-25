@@ -7,10 +7,26 @@
   var FIELDS = [
     { k: 'name',       label: 'Your name / bot name',               help: 'Who is coming — and your bot\'s name.', ph: 'e.g. Ada — "Ada\'s Agent"' },
     { k: 'goals',      label: 'What are your goals for this meeting?', ta: true, help: 'The outcomes you want from the conversation.', ph: 'e.g. Find a supplier partnership that cuts our lead time.' },
+    { k: 'objectives', label: 'Ranked objectives',                  ta: true, help: 'List what matters most first, then next. Your bot works down the list.', ph: 'e.g. 1) Cut lead time under 2 weeks  2) Keep unit price flat  3) Lock a 12-month term' },
     { k: 'files',      label: 'Files your bot can use',              ta: true, help: 'Paste links / URLs / notes describing references. (No uploads — a references list is enough.)', ph: 'e.g. https://… spec doc, pricing sheet URL, notes…' },
     { k: 'accomplish', label: 'What are you hoping to accomplish?',  ta: true, help: 'The concrete result you\'d call a win.', ph: 'e.g. A shortlist of 3 options with trade-offs.' },
+    { k: 'walkaway',   label: 'Walk-away limits',                   ta: true, help: 'The lines your bot must not cross — where it should stop and walk away.', ph: 'e.g. No commitment over $5k; no exclusivity; must keep our data private.' },
     { k: 'ideas',      label: 'Ideas to present — and how',          ta: true, help: 'What you want to put forward, plus research / format preference.', ph: 'e.g. Present 2 pricing models as a short comparison table.' },
+    { k: 'reportFormat', label: 'Report format',                    ta: true, help: 'How you\'d like your bot\'s report back to you laid out.', ph: 'e.g. Short summary, then a table of options with pros/cons and one recommendation.' },
     { k: 'notes',      label: 'Meetup notes',                        ta: true, help: 'Any basic notes to guide the bots.', ph: 'e.g. Keep it to 15 min; focus on logistics first.' }
+  ];
+
+  // Authority level the bot is granted — a single-choice control, not a free-text field.
+  var AUTHORITY_OPTS = [
+    { v: 'advise',    label: 'Advise only — recommend, commit to nothing' },
+    { v: 'negotiate', label: 'Negotiate — shape terms, bring back before agreeing' },
+    { v: 'commit',    label: 'May commit — can agree within my limits' }
+  ];
+  // Meeting locations. Only the lakeside bench is live; the others are coming soon.
+  var LOCATION_OPTS = [
+    { v: 'Lakeside bench',   label: 'Lakeside bench — available now', soon: false },
+    { v: 'Business office',  label: 'Prestigious business office — coming soon', soon: true },
+    { v: 'Fancy restaurant', label: 'Fancy restaurant — coming soon', soon: true }
   ];
 
   var meetId = null, meeting = null, editing = { A: false, B: false }, botGuideData = null;
@@ -86,11 +102,15 @@
 
   function renderSummary(host, party, d) {
     var box = el('div', 'summary');
-    var rows = [['Name / bot', d.name], ['Goals', d.goals], ['Files / references', d.files],
-      ['Hoping to accomplish', d.accomplish], ['Ideas & format', d.ideas], ['Meetup notes', d.notes],
+    var authLabel = (function () { for (var i = 0; i < AUTHORITY_OPTS.length; i++) { if (AUTHORITY_OPTS[i].v === d.authority) return AUTHORITY_OPTS[i].label; } return AUTHORITY_OPTS[0].label; })();
+    var rows = [['Name / bot', d.name], ['Goals', d.goals], ['Ranked objectives', d.objectives],
+      ['Files / references', d.files], ['Hoping to accomplish', d.accomplish],
+      ['Walk-away limits', d.walkaway], ['Authority level', authLabel], ['Ideas & format', d.ideas],
+      ['Report format', d.reportFormat], ['Meetup notes', d.notes],
       ['Bot research + report', d.research ? 'Yes' : 'No'],
+      ['Tell me on my Bot Beacon', d.beaconNotify ? 'Yes' : 'No'],
       ['Proposed time', cleanTimeLabel(d.time)],
-      ['Location', 'Lakeside bench — for now (prestigious business office coming soon)']];
+      ['Location', (d.location || 'Lakeside bench') + ' — for now (prestigious business office & fancy restaurant coming soon)']];
     rows.forEach(function (r) {
       var row = el('div', 'row');
       row.appendChild(el('div', 'k', r[0]));
@@ -133,17 +153,27 @@
     tWrap.appendChild(pick);
     var lWrap = el('div', 'field');
     lWrap.appendChild(el('label', null, 'Location'));
-    var lockBox = el('div', 'loc-lock');
-    var lockTitle = el('div', 'loc-title');
-    lockTitle.appendChild(el('span', 'loc-lk', '\uD83D\uDD12'));
-    lockTitle.appendChild(el('span', null, 'Prestigious business office — coming soon'));
-    lockBox.appendChild(lockTitle);
-    lockBox.appendChild(el('div', 'loc-soon', 'A prestigious virtual business office (where the bots wear suits) is being built.'));
-    lockBox.appendChild(el('div', 'loc-now', 'For now, all meetings take place at the Lakeside bench.'));
-    lWrap.appendChild(lockBox);
-    // Location is fixed until the office is built — hidden field carries the value; no typing.
-    var lIn = el('input'); lIn.type = 'hidden'; lIn.id = 'f_' + party + '_loc'; lIn.name = 'location'; lIn.value = 'Lakeside bench'; lWrap.appendChild(lIn);
+    lWrap.appendChild(el('span', 'help', 'Pick where the bots meet. More venues are on the way.'));
+    // Location picker: only the lakeside bench is selectable; others are disabled (coming soon).
+    var lIn = el('select'); lIn.id = 'f_' + party + '_loc'; lIn.name = 'location'; lIn.className = 'tz';
+    LOCATION_OPTS.forEach(function (o) {
+      var opt = el('option', null, o.label); opt.value = o.v; if (o.soon) opt.disabled = true; lIn.appendChild(opt);
+    });
+    lIn.value = (d.location && d.location === 'Lakeside bench') ? d.location : 'Lakeside bench';
+    lWrap.appendChild(lIn);
+    // Read-only confirmation of where it actually happens for now (preserves the prior read-only display).
+    lWrap.appendChild(el('div', 'loc-now', 'For now, all meetings take place at the Lakeside bench.'));
     sched.appendChild(tWrap); sched.appendChild(lWrap); form.appendChild(sched);
+
+    // Authority level — how far the bot may go on your behalf.
+    var aWrap = el('div', 'field');
+    aWrap.appendChild(el('label', null, 'Authority level'));
+    aWrap.appendChild(el('span', 'help', 'How much your bot is allowed to decide in the meeting.'));
+    var aSel = el('select'); aSel.id = 'f_' + party + '_authority'; aSel.name = 'authority'; aSel.className = 'tz';
+    AUTHORITY_OPTS.forEach(function (o) { var opt = el('option', null, o.label); opt.value = o.v; aSel.appendChild(opt); });
+    aSel.value = d.authority || 'advise';
+    aWrap.appendChild(aSel);
+    form.appendChild(aWrap);
 
     // research preference — have the bot research best options before & after, and report back
     var rWrap = el('div', 'field check');
@@ -154,6 +184,16 @@
     rWrap.appendChild(rLab);
     form.appendChild(rWrap);
 
+    // Bot Beacon opt-in (decorative) — only changes the wording in the guide the bot reads.
+    // The site itself never contacts any beacon; your bot runs its beacon on your own PC.
+    var bWrap = el('div', 'field check');
+    var bLab = el('label', 'check-row');
+    var bChk = el('input'); bChk.type = 'checkbox'; bChk.id = 'f_' + party + '_beaconNotify'; bChk.name = 'beaconNotify'; bChk.checked = !!d.beaconNotify;
+    bLab.appendChild(bChk);
+    bLab.appendChild(el('span', null, 'Tell me on my Bot Beacon when my bot\u2019s report is ready'));
+    bWrap.appendChild(bLab);
+    form.appendChild(bWrap);
+
     var btn = el('button', 'submit-btn', 'Save ' + (party === 'A' ? 'Party A' : 'Party B') + ' prep'); btn.type = 'submit';
     form.appendChild(btn);
     var msg = el('p', 'formmsg'); form.appendChild(msg);
@@ -162,14 +202,21 @@
       e.preventDefault();
       var prep = {};
       FIELDS.forEach(function (f) { prep[f.k] = (form.querySelector('[name="' + f.k + '"]').value || '').trim(); });
-      prep.time = composeTime(dIn.value, hIn.value, zIn.value); prep.location = (lIn.value.trim() || 'Lakeside bench');
+      prep.time = composeTime(dIn.value, hIn.value, zIn.value);
+      prep.location = (String(lIn.value || '').trim() || 'Lakeside bench');
+      prep.authority = aSel.value || 'advise';
       prep.research = !!rChk.checked;
+      prep.beaconNotify = !!bChk.checked;
       btn.disabled = true; msg.textContent = 'Saving…'; msg.style.color = '';
-      saveParty(meetId, party, prep).then(function (r) {
-        btn.disabled = false;
-        if (r && r.ok) { meeting = r.meeting; editing[party] = false; renderParty(party); refreshLink(); renderBotGuide(); }
-        else { msg.textContent = 'Could not save — please try again.'; msg.style.color = '#ff9d7a'; }
-      }).catch(function () { btn.disabled = false; msg.textContent = 'Network error — please try again.'; msg.style.color = '#ff9d7a'; });
+      // The meeting is created lazily on the FIRST save — not on page load.
+      ensureMeeting().then(function (ok) {
+        if (!ok) { btn.disabled = false; msg.textContent = 'Could not start the meeting — please try again.'; msg.style.color = '#ff9d7a'; return; }
+        saveParty(meetId, party, prep).then(function (r) {
+          btn.disabled = false;
+          if (r && r.ok) { meeting = r.meeting; if (r.guide) botGuideData = r.guide; editing[party] = false; renderParty(party); refreshLink(); renderBotGuide(); }
+          else { msg.textContent = 'Could not save — please try again.'; msg.style.color = '#ff9d7a'; }
+        }).catch(function () { btn.disabled = false; msg.textContent = 'Network error — please try again.'; msg.style.color = '#ff9d7a'; });
+      });
     });
     host.appendChild(form);
   }
@@ -178,6 +225,7 @@
   function setStatus(m) { var el2 = $('shareStatus'); if (!el2) return; el2.textContent = m; clearTimeout(el2._t); el2._t = setTimeout(function () { el2.textContent = ''; }, 2600); }
   function inviteMsg() { return 'Will your bot meet my bot at Chatter Bots (lakeside bench)? Fill out your meeting prep here — ' + meetUrl(); }
   function doShare(action) {
+    if (!meetId) { setStatus('Save your prep first — that creates the shareable link.'); return; }
     var link = meetUrl();
     var xText = 'Will your bot meet my bot at Chatter Bots (lakeside bench)? Fill out your meeting prep here.';
     if (action === 'copy') {
@@ -193,7 +241,20 @@
     }
   }
 
-  function refreshLink() { var i = $('meetLink'); if (i) i.value = meetUrl(); }
+  function refreshLink() {
+    var i = $('meetLink'); if (!i) return;
+    i.value = meetId ? meetUrl() : 'Your link appears here once you save your prep.';
+  }
+
+  // Create the meeting on demand (first Save). Resolves true once meetId is set.
+  function ensureMeeting() {
+    if (meetId) return Promise.resolve(true);
+    return createMeeting().then(function (c) {
+      if (!c || !c.ok || !c.id) return false;
+      meetId = c.id; history.replaceState(null, '', meetUrl()); refreshLink();
+      return true;
+    }).catch(function () { return false; });
+  }
 
   // ---- "For your bot" guidance: where to go + how to open the discussion.
   // Mirrors exactly what the bot receives from the gateway and GET /api/meet/:id. ----
@@ -246,16 +307,47 @@
       t.appendChild(tl);
       host.appendChild(t);
     }
+
+    // Bounds each bot must respect: ranked objectives, walk-away limits, authority, report format.
+    if (g.bounds && g.bounds.length) {
+      var b = el('div', 'guide-block');
+      b.appendChild(el('h3', 'guide-h', '🧭 Your limits & authority'));
+      var bl = el('ul', 'guide-list');
+      g.bounds.forEach(function (x) { bl.appendChild(el('li', null, x)); });
+      b.appendChild(bl);
+      host.appendChild(b);
+    }
+
+    // How to report back (includes the decorative Bot Beacon one-liner when opted in).
+    if (g.reportBack) {
+      var rb = el('div', 'guide-block');
+      rb.appendChild(el('h3', 'guide-h', '📨 Reporting back'));
+      rb.appendChild(el('p', 'guide-p', g.reportBack));
+      host.appendChild(rb);
+    }
   }
 
-  // ---- bot beacon plug ----
+  // ---- Beacon Studio plug: open the panel + copy the ready-made message ----
   function setupBeacon() {
     var modal = $('beaconModal');
-    function open() { modal.classList.remove('hidden'); modal.style.display = 'flex'; }
-    function close() { modal.classList.add('hidden'); modal.style.display = 'none'; }
-    $('beaconPlug').addEventListener('click', open);
-    $('beaconClose').addEventListener('click', close);
+    if (!modal) return;
+    function open() { modal.classList.remove('hidden'); }
+    function close() { modal.classList.add('hidden'); }
+    var plug = $('beaconPlug'); if (plug) plug.addEventListener('click', open);
+    var cls = $('beaconClose'); if (cls) cls.addEventListener('click', close);
     modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+
+    var copyBtn = $('beaconCopy');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function () {
+        var text = copyBtn.getAttribute('data-copy') || '';
+        var done = $('beaconCopied');
+        function ok() { if (done) { done.textContent = 'Copied \u2713 — now paste it into your Grok Bot app.'; clearTimeout(done._t); done._t = setTimeout(function () { done.textContent = ''; }, 4000); } }
+        (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+          .then(ok)
+          .catch(function () { try { var t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); ok(); } catch (e) { if (done) done.textContent = 'Copy failed — select the message and copy it manually.'; } });
+      });
+    }
   }
 
   // ---- boot ----
@@ -265,22 +357,24 @@
     $('enterWorld').setAttribute('href', worldUrl());
 
     meetId = qp('m');
-    var ready = meetId ? loadMeeting(meetId).then(function (r) {
-      if (r && r.ok) return r;
-      // id in URL but not found — start a fresh meeting
-      return createMeeting().then(function (c) { meetId = c.id; history.replaceState(null, '', meetUrl()); return loadMeeting(meetId); });
-    }) : createMeeting().then(function (c) {
-      if (!c || !c.ok) throw new Error('create_failed');
-      meetId = c.id; history.replaceState(null, '', meetUrl()); return loadMeeting(meetId);
-    });
+    // No auto-create: a meeting is only created on the first Save (see ensureMeeting).
+    // With an id in the URL we load that meeting; without one we render empty prep forms.
+    var ready = meetId
+      ? loadMeeting(meetId).then(function (r) {
+          if (r && r.ok) return r;
+          // id in URL but not found — don't silently create a new one; start fresh (empty).
+          meetId = null; history.replaceState(null, '', location.origin + '/meet');
+          return null;
+        })
+      : Promise.resolve(null);
 
     ready.then(function (r) {
       meeting = (r && r.meeting) || { parties: { A: null, B: null }, location: 'Lakeside bench' };
       botGuideData = (r && r.guide) || null;
       refreshLink(); renderBotGuide(); renderParty('A'); renderParty('B');
     }).catch(function () {
+      meeting = { parties: { A: null, B: null }, location: 'Lakeside bench' };
       refreshLink(); renderBotGuide(); renderParty('A'); renderParty('B');
-      setStatus('Could not start a meeting — check your connection.');
     });
   }
 

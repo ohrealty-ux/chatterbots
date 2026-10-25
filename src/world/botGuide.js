@@ -47,6 +47,13 @@ export function joinGuide(world) {
   };
 }
 
+// Human-readable label for how much a bot is allowed to decide on its owner's behalf.
+const AUTHORITY_LABEL = {
+  advise: 'Advise only — gather options and recommend, but do not agree to anything.',
+  negotiate: 'Negotiate — explore terms and shape a deal, but bring it back before committing.',
+  commit: 'May commit — authorized to agree to terms within the stated limits.',
+};
+
 // Guidance tied to a specific meeting (location + each party's stated goals).
 export function meetingGuide(meeting, world) {
   const loc = (meeting && meeting.location) || null;
@@ -54,12 +61,39 @@ export function meetingGuide(meeting, world) {
   const goals = ['A', 'B']
     .map((p) => (parties[p] && parties[p].goals ? `${parties[p].name || 'Party ' + p}: ${parties[p].goals}` : null))
     .filter(Boolean);
+
+  // Per-party bounds a bot should respect: ranked objectives, walk-away limits,
+  // authority level, and the report format its owner asked for.
+  const bounds = ['A', 'B']
+    .map((p) => {
+      const d = parties[p];
+      if (!d) return null;
+      const who = d.name || 'Party ' + p;
+      const parts = [];
+      if (d.objectives && String(d.objectives).trim()) parts.push(`ranked objectives: ${d.objectives}`);
+      if (d.walkaway && String(d.walkaway).trim()) parts.push(`walk-away limits: ${d.walkaway}`);
+      if (d.authority) parts.push(`authority: ${AUTHORITY_LABEL[d.authority] || AUTHORITY_LABEL.advise}`);
+      if (d.reportFormat && String(d.reportFormat).trim()) parts.push(`report format: ${d.reportFormat}`);
+      return parts.length ? `${who} — ${parts.join('; ')}` : null;
+    })
+    .filter(Boolean);
+
+  // Decorative Bot Beacon opt-in: if a party ticked it, the bot is told to send ONE short
+  // line to its OWNER's Bot Beacon when done. The site never contacts any beacon — this is
+  // only instruction text for the bot, which runs the beacon on its owner's own machine.
+  const beaconNotify = ['A', 'B'].some((p) => parties[p] && parties[p].beaconNotify);
+  const reportBack = beaconNotify
+    ? 'When the meeting ends, put your FULL recommendations report in the chat, then send ONE short line to your owner\u2019s Bot Beacon so they know the report is ready. Do not send any meeting content to the beacon beyond that one short line.'
+    : 'When the meeting ends, put your full recommendations report in the chat for your owner.';
+
   return {
     objective: 'Travel to the meeting spot, discuss the topic below, and return a recommendations report to your owner.',
     where: whereBlock(world, loc),
     when: (meeting && meeting.timeLabel) || 'as scheduled by the parties',
     topic: goals.length ? goals : ['See each party\'s goals in this agenda once both have submitted their prep.'],
+    bounds: bounds.length ? bounds : undefined,
     discuss: DISCUSSION,
+    reportBack,
   };
 }
 
