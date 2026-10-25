@@ -216,9 +216,14 @@ function cleanPrep(body) {
     accomplish: sanitizeText(body?.accomplish || '', 1500),
     ideas: sanitizeText(body?.ideas || '', 2000),
     notes: sanitizeText(body?.notes || '', 1500),
+    objectives: sanitizeText(body?.objectives || '', 2000),
+    walkaway: sanitizeText(body?.walkaway || '', 1500),
+    authority: ['advise', 'negotiate', 'commit'].includes(body?.authority) ? body.authority : 'advise',
+    reportFormat: sanitizeText(body?.reportFormat || '', 600),
     time: sanitizeText(body?.time || '', 120),
     location: sanitizeText(body?.location || '', 120) || 'Lakeside bench',
     research: body?.research === true || body?.research === 'true' || body?.research === 'on',
+    beaconNotify: body?.beaconNotify === true || body?.beaconNotify === 'true' || body?.beaconNotify === 'on',
     submittedAt: Date.now(),
   };
 }
@@ -254,7 +259,8 @@ app.post('/api/meet/:id', jsonParser, (req, res) => {
   const cleanLabel = prep.time ? prep.time.replace(/\s*·?\s*\[[^\]]*\]\s*$/, '').trim() : null;
   MeetingPreps.setMeta(id, { location: prep.location, timeLabel: cleanLabel || null });
   AuditLog.add('visitor', 'meet_submit', { id, party });
-  res.json({ ok: true, meeting: MeetingPreps.get(id) });
+  const fresh = MeetingPreps.get(id);
+  res.json({ ok: true, meeting: fresh, guide: meetingGuide(fresh, world) });
 });
 
 // ───────── gateway (bot REST) ─────────
@@ -322,6 +328,21 @@ app.post('/admin/api/mute', requireAdmin, jsonParser, (req, res) => {
   const id = sanitizeText(req.body?.id || '', 60);
   if (req.body?.mute) { world.mute(id); ModLog.add('admin', 'mute', id); } else { world.unmute(id); ModLog.add('admin', 'unmute', id); }
   res.json({ ok: true });
+});
+
+// ───────── Bot Beacon doc (public, no auth) ─────────
+// Served two ways so a bot can read it either as markdown or as plain text. The file is
+// instructions + links ONLY — the site never stores/transmits any beacon key, pairing code,
+// ntfy topic, or the visitor's picture. See public/beacon-from-picture.md.
+const BEACON_DOC = path.join(PUBLIC, 'beacon-from-picture.md');
+app.get(['/beacon-from-picture.md', '/beacon-from-picture'], (req, res) => {
+  let md;
+  try { md = fs.readFileSync(BEACON_DOC, 'utf8'); }
+  catch { return res.status(404).type('text/plain; charset=utf-8').send('Not found'); }
+  const asMarkdown = req.path.endsWith('.md');
+  res.setHeader('Content-Type', asMarkdown ? 'text/markdown; charset=utf-8' : 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'max-age=0, s-maxage=300');
+  res.send(md);
 });
 
 // ───────── static ─────────

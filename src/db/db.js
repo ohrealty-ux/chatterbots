@@ -104,6 +104,12 @@ CREATE TABLE IF NOT EXISTS meeting_preps (
 );
 `);
 
+// Decorative per-bot "beacon badge" opt-in (purely cosmetic nameplate glow). This is NOT a
+// real Bot Beacon and holds NO beacon key/topic/pairing data — just a 0/1 display flag.
+// Added as a backward-compatible migration so existing databases keep working.
+try { db.prepare('ALTER TABLE bots ADD COLUMN beacon INTEGER DEFAULT 0').run(); }
+catch { /* column already exists */ }
+
 const now = () => Date.now();
 
 export const Bots = {
@@ -118,6 +124,7 @@ export const Bots = {
   setStatus(id, status) { db.prepare('UPDATE bots SET status=? WHERE id=?').run(status, id); },
   setToken(id, hash, prefix) { db.prepare('UPDATE bots SET token_hash=?,token_prefix=?,revoked=0 WHERE id=?').run(hash, prefix, id); },
   revoke(id) { db.prepare('UPDATE bots SET revoked=1 WHERE id=?').run(id); },
+  setBeacon(id, on) { db.prepare('UPDATE bots SET beacon=? WHERE id=?').run(on ? 1 : 0, id); },
   remove(id) { db.prepare('DELETE FROM bots WHERE id=?').run(id); },
   addTokens(id, n) {
     const day = new Date().toISOString().slice(0, 10);

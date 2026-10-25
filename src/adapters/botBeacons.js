@@ -1,7 +1,16 @@
-// Bot Beacons adapter. Subscribes to an ntfy topic, AES-256 decrypts each message,
-// and maps beacon events to world behavior. Read-only consumer of the upstream project
-// (github.com/SnazzyGaz/bot-beacons) which does one-way AES-256 encrypted ntfy notifications.
-// INERT and logged as disabled if BOT_BEACONS_* env is not set. No file/command access.
+// Bot Beacons adapter — INERT / DISABLED by default, and intended to stay that way.
+//
+// IMPORTANT: this adapter does NOT, and cannot, decrypt Garyck Arntzen's real Bot Beacons
+// (github.com/SnazzyGaz/bot-beacons). Gary's project encrypts with AES-256-CBC + HMAC-SHA256
+// using a per-install key and per-install topics that live only on the user's Windows PC
+// (Windows DPAPI local key storage). This file's AES-256-GCM experiment is a generic,
+// speculative stub that will simply fail to decrypt those messages — by design. Chatter Bots
+// never holds any visitor's beacon key, pairing code, or ntfy topic, so it can never read a
+// real beacon, and it must not try to. Leave BOT_BEACONS_* UNSET so this stays disabled.
+//
+// It is kept only as an optional, self-hosted integration point for a deployer who runs their
+// OWN ntfy topic + key end to end. The public chatterbots.pro deployment keeps it off.
+// No file/command access; logged as disabled whenever BOT_BEACONS_* env is not set.
 import crypto from 'node:crypto';
 
 function parseKey(k) {

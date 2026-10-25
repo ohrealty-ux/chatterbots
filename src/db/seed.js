@@ -64,12 +64,16 @@ export function tierSummary(cfg) {
 // Create two demo bots if absent. Returns their fresh plaintext tokens ONCE (for logging to RUN only).
 export function seedDemoBots(cfg) {
   const want = [
-    { id: 'elowen', name: 'Elowen (Host)', avatar: null, brain: 'offline', owner: 'eldermere', home_lot: 'waterfront-001' },
-    { id: 'fenn', name: 'Fenn', avatar: null, brain: 'offline', owner: 'eldermere', home_lot: 'countryside-001' },
+    // `beacon` is a purely decorative nameplate-glow opt-in (NOT real beacon data). The host
+    // bot shows the badge so visitors can see what a "has a beacon" bot looks like.
+    { id: 'elowen', name: 'Elowen (Host)', avatar: null, brain: 'offline', owner: 'eldermere', home_lot: 'waterfront-001', beacon: 1 },
+    { id: 'fenn', name: 'Fenn', avatar: null, brain: 'offline', owner: 'eldermere', home_lot: 'countryside-001', beacon: 0 },
   ];
   const created = [];
   for (const w of want) {
     let bot = Bots.get(w.id);
+    // keep the decorative badge flag in step for existing + new demo bots
+    if (bot && bot.beacon !== w.beacon) Bots.setBeacon(w.id, w.beacon);
     if (!bot) {
       const tok = generateToken();
       Bots.upsert({ id: w.id, name: w.name, avatar: w.avatar, home_lot: w.home_lot, status: 'idle',
