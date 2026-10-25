@@ -29,6 +29,9 @@ export class World extends EventEmitter {
     this.loop.unref?.();
   }
 
+  // Stop the simulation tick (called on graceful shutdown so no tick runs during DB teardown).
+  stop() { if (this.loop) { clearInterval(this.loop); this.loop = null; } }
+
   // Build the named-place index. Produces two maps keyed by normalized name:
   //   this.namedPlaces  name -> [x,0,z]                       (back-compat: resolvePlace)
   //   this.landmarks    name -> { pos, label, seatAnchorId }  (rich: resolveLandmark)

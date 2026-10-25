@@ -9,6 +9,8 @@ import crypto from 'node:crypto';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, '..', '..', 'data');
 fs.mkdirSync(DATA_DIR, { recursive: true });
+// Lock down the data directory (0700) so db files + demo tokens aren't world-readable.
+try { fs.chmodSync(DATA_DIR, 0o700); } catch { /* best effort */ }
 
 // DB file is overridable via WORLD_DB (relative paths resolve under data/). This lets the
 // headless demo run against its own file instead of sharing the live server's world.db.
@@ -17,6 +19,8 @@ const DB_FILE = process.env.WORLD_DB
   : path.join(DATA_DIR, 'world.db');
 const db = new Database(DB_FILE);
 db.pragma('journal_mode = WAL');
+// db files hold tokens-at-rest (hashes) + encrypted webhook blobs — keep them owner-only.
+for (const suffix of ['', '-wal', '-shm']) { try { fs.chmodSync(DB_FILE + suffix, 0o600); } catch { /* may not exist yet */ } }
 
 // Cleanly finalize all prepared statements and close the handle. Call before a short-lived
 // process exits (e.g. the headless demo) to avoid better-sqlite3's teardown assertion on Node 24.
@@ -100,7 +104,15 @@ CREATE TABLE IF NOT EXISTS meeting_preps (
   party_a TEXT,
   party_b TEXT,
   created_at INTEGER,
-  updated_at INTEGER
+  updated_at INTEGER,
+  edit_key_hash TEXT
+);
+CREATE TABLE IF NOT EXISTS admin_sessions (
+  id TEXT PRIMARY KEY,
+  csrf TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  last_seen INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL
 );
 `);
 
@@ -109,6 +121,24 @@ CREATE TABLE IF NOT EXISTS meeting_preps (
 // Added as a backward-compatible migration so existing databases keep working.
 try { db.prepare('ALTER TABLE bots ADD COLUMN beacon INTEGER DEFAULT 0').run(); }
 catch { /* column already exists */ }
+
+// Backward-compatible migrations for new hardening columns. Each wrapped so re-runs are safe.
+// face: re-encoded 256x256 PNG stored in-DB (served from /faces/:id.png, outside static root).
+// webhook_enc / webhook_key_enc: AES-256-GCM blobs (bound to bot id). webhook_enabled: admin toggle.
+// edit_key_hash on meeting_preps lets only the edit-key holder modify a party's prep.
+for (const stmt of [
+  'ALTER TABLE bots ADD COLUMN face BLOB',
+  'ALTER TABLE bots ADD COLUMN webhook_enc TEXT',
+  'ALTER TABLE bots ADD COLUMN webhook_key_enc TEXT',
+  'ALTER TABLE bots ADD COLUMN webhook_enabled INTEGER DEFAULT 1',
+  'ALTER TABLE meeting_preps ADD COLUMN edit_key_hash TEXT',
+]) { try { db.prepare(stmt).run(); } catch { /* column already exists */ } }
+
+// Reject duplicate world-pass token prefixes at the storage layer. Partial index so multiple
+// legacy rows with a NULL prefix (pre-migration) are still allowed; only non-null prefixes must
+// be unique. IF NOT EXISTS keeps re-seeding an existing DB idempotent (no crash on restart).
+try { db.prepare('CREATE UNIQUE INDEX IF NOT EXISTS idx_bots_token_prefix ON bots(token_prefix) WHERE token_prefix IS NOT NULL').run(); }
+catch { /* pre-existing duplicate prefixes; leave as-is rather than crash on boot */ }
 
 const now = () => Date.now();
 
@@ -120,8 +150,20 @@ export const Bots = {
   },
   get(id) { return db.prepare('SELECT * FROM bots WHERE id=?').get(id); },
   byTokenPrefix(prefix) { return db.prepare('SELECT * FROM bots WHERE token_prefix=? AND revoked=0').get(prefix); },
+  prefixExists(prefix) { return !!db.prepare('SELECT 1 FROM bots WHERE token_prefix=?').get(prefix); },
   all() { return db.prepare('SELECT * FROM bots ORDER BY created_at DESC').all(); },
+  byStatus(status) { return db.prepare('SELECT * FROM bots WHERE status=? ORDER BY created_at DESC').all(status); },
   setStatus(id, status) { db.prepare('UPDATE bots SET status=? WHERE id=?').run(status, id); },
+  // Create a bot from the public join flow: status 'pending' until an admin approves.
+  createPending(b) {
+    db.prepare(`INSERT INTO bots (id,name,avatar,home_lot,status,token_hash,token_prefix,scopes,owner,brain,created_at,recent_chat,face,webhook_enabled)
+      VALUES (@id,@name,@avatar,@home_lot,'pending',@token_hash,@token_prefix,@scopes,@owner,@brain,@created_at,'[]',@face,1)`).run(b);
+  },
+  setFace(id, buf) { db.prepare('UPDATE bots SET face=?, avatar=? WHERE id=?').run(buf, `/faces/${id}.png`, id); },
+  getFace(id) { const r = db.prepare('SELECT face FROM bots WHERE id=?').get(id); return r ? r.face : null; },
+  setWebhook(id, enc, keyEnc) { db.prepare('UPDATE bots SET webhook_enc=?, webhook_key_enc=?, webhook_enabled=1 WHERE id=?').run(enc, keyEnc, id); },
+  clearWebhook(id) { db.prepare('UPDATE bots SET webhook_enc=NULL, webhook_key_enc=NULL WHERE id=?').run(id); },
+  setWebhookEnabled(id, on) { db.prepare('UPDATE bots SET webhook_enabled=? WHERE id=?').run(on ? 1 : 0, id); },
   setToken(id, hash, prefix) { db.prepare('UPDATE bots SET token_hash=?,token_prefix=?,revoked=0 WHERE id=?').run(hash, prefix, id); },
   revoke(id) { db.prepare('UPDATE bots SET revoked=1 WHERE id=?').run(id); },
   setBeacon(id, on) { db.prepare('UPDATE bots SET beacon=? WHERE id=?').run(on ? 1 : 0, id); },
@@ -200,6 +242,10 @@ export const Meetings = {
     return db.prepare(`SELECT * FROM meetings WHERE (from_bot=? OR to_bot=?)
       AND status IN ('pending','accepted','active') ORDER BY id DESC`).all(botId, botId);
   },
+  // How many open (pending/accepted/active) meetings a bot is organiser of — cap abuse.
+  openCountFrom(botId) {
+    return db.prepare(`SELECT COUNT(*) c FROM meetings WHERE from_bot=? AND status IN ('pending','accepted','active')`).get(botId).c;
+  },
   // Accepted meetings whose scheduled time has arrived (relative/demo timers).
   dueAccepted(ts) {
     return db.prepare("SELECT * FROM meetings WHERE status='accepted' AND fire_at IS NOT NULL AND fire_at<=?").all(ts);
@@ -223,14 +269,16 @@ function _genMeetId() {
   return s;
 }
 export const MeetingPreps = {
-  create({ location, timeLabel } = {}) {
+  create({ location, timeLabel, editKeyHash } = {}) {
     let id; // retry on the astronomically unlikely collision
     for (let i = 0; i < 5; i++) { id = _genMeetId(); if (!db.prepare('SELECT 1 FROM meeting_preps WHERE id=?').get(id)) break; }
     const ts = now();
-    db.prepare(`INSERT INTO meeting_preps (id,location,time_label,party_a,party_b,created_at,updated_at)
-      VALUES (?,?,?,NULL,NULL,?,?)`).run(id, location || 'Lakeside bench', timeLabel || null, ts, ts);
+    db.prepare(`INSERT INTO meeting_preps (id,location,time_label,party_a,party_b,created_at,updated_at,edit_key_hash)
+      VALUES (?,?,?,NULL,NULL,?,?,?)`).run(id, location || 'Lakeside bench', timeLabel || null, ts, ts, editKeyHash || null);
     return id;
   },
+  // Returns the stored edit-key hash (or null) without exposing it in get().
+  editKeyHash(id) { const r = db.prepare('SELECT edit_key_hash FROM meeting_preps WHERE id=?').get(id); return r ? r.edit_key_hash : null; },
   get(id) {
     const row = db.prepare('SELECT * FROM meeting_preps WHERE id=?').get(id);
     if (!row) return null;
@@ -252,6 +300,34 @@ export const MeetingPreps = {
     if (location !== undefined) db.prepare('UPDATE meeting_preps SET location=?, updated_at=? WHERE id=?').run(location, now(), id);
     if (timeLabel !== undefined) db.prepare('UPDATE meeting_preps SET time_label=?, updated_at=? WHERE id=?').run(timeLabel, now(), id);
     return this.get(id);
+  },
+};
+
+// ───────── Admin sessions (server-side; cookie holds only an opaque id) ─────────
+export const AdminSessions = {
+  create(id, csrf, idleMs, absMs) {
+    const ts = now();
+    db.prepare('INSERT INTO admin_sessions (id,csrf,created_at,last_seen,expires_at) VALUES (?,?,?,?,?)')
+      .run(id, csrf, ts, ts, ts + absMs);
+    return { id, csrf };
+  },
+  get(id) { return id ? db.prepare('SELECT * FROM admin_sessions WHERE id=?').get(id) : null; },
+  touch(id, ts) { db.prepare('UPDATE admin_sessions SET last_seen=? WHERE id=?').run(ts, id); },
+  destroy(id) { db.prepare('DELETE FROM admin_sessions WHERE id=?').run(id); },
+  prune(idleMs) {
+    const ts = now();
+    db.prepare('DELETE FROM admin_sessions WHERE expires_at<=? OR last_seen<=?').run(ts, ts - idleMs);
+  },
+};
+
+// ───────── Retention / pruning: keep tables bounded ─────────
+export const Prune = {
+  run() {
+    try {
+      db.prepare('DELETE FROM chat_log WHERE id NOT IN (SELECT id FROM chat_log ORDER BY id DESC LIMIT 5000)').run();
+      db.prepare('DELETE FROM audit_log WHERE id NOT IN (SELECT id FROM audit_log ORDER BY id DESC LIMIT 20000)').run();
+      db.prepare('DELETE FROM meeting_preps WHERE created_at < ?').run(now() - 30 * 24 * 3600 * 1000);
+    } catch { /* best effort */ }
   },
 };
 

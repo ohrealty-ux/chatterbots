@@ -75,7 +75,10 @@ export function seedDemoBots(cfg) {
     // keep the decorative badge flag in step for existing + new demo bots
     if (bot && bot.beacon !== w.beacon) Bots.setBeacon(w.id, w.beacon);
     if (!bot) {
-      const tok = generateToken();
+      // Fresh, non-colliding prefix (the bots.token_prefix unique index rejects duplicates).
+      let tok = generateToken();
+      for (let i = 0; i < 5 && Bots.prefixExists(tok.prefix); i++) tok = generateToken();
+      if (Bots.prefixExists(tok.prefix)) continue;   // give up rather than crash the boot
       Bots.upsert({ id: w.id, name: w.name, avatar: w.avatar, home_lot: w.home_lot, status: 'idle',
         token_hash: tok.hash, token_prefix: tok.prefix, scopes: 'join,move,say,emote,status,sit,look,follow,enter_lot,place_object',
         owner: w.owner, brain: w.brain, created_at: Date.now() });
