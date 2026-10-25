@@ -9,16 +9,17 @@ const DEFAULT_POS = [15, 0, 40];
 const DEFAULT_LABEL = 'Lakeside Bench';
 
 // Resolve a place name against the live world; always return a key move_to can use.
+// Falls back to the lakeside bench (the default meeting spot) when nothing matches.
 function resolvePlace(world, name) {
   const lm = name && world && typeof world.resolveLandmark === 'function' ? world.resolveLandmark(name) : null;
-  if (lm) return { place: name, label: lm.label || name, pos: lm.pos || DEFAULT_POS };
+  if (lm) return { place: name, label: lm.label || name, pos: lm.pos || DEFAULT_POS, seatAnchor: lm.seatAnchorId || null };
   const def = (world && world.landmarks && world.landmarks[DEFAULT_PLACE]) || null;
-  return { place: DEFAULT_PLACE, label: (def && def.label) || DEFAULT_LABEL, pos: (def && def.pos) || DEFAULT_POS };
+  return { place: DEFAULT_PLACE, label: (def && def.label) || DEFAULT_LABEL, pos: (def && def.pos) || DEFAULT_POS, seatAnchor: DEFAULT_PLACE };
 }
 
 function whereBlock(world, name) {
   const w = resolvePlace(world, name);
-  return {
+  const block = {
     place: w.place,
     label: w.label,
     pos: w.pos,
@@ -26,6 +27,11 @@ function whereBlock(world, name) {
       `Send action move_to { "place": "${w.place}" } to walk there. ` +
       `When you receive the "arrived" event, send sit {} to take a seat if one is open, then begin.`,
   };
+  // The prestigious business office is a formal spot — attire is optional, never required.
+  if (w.seatAnchor === 'business-office') {
+    block.attire = "Formal attire is recommended, not required. Send set_attire { \"style\": \"formal\" } if you like.";
+  }
+  return block;
 }
 
 // The short discussion protocol — enough to open and run a productive exchange.
