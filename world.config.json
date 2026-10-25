@@ -1,0 +1,144 @@
+{
+  "$comment": "Single source of truth for Chatter Bots world. Tunable without code changes. Prices are DISPLAY-ONLY — no wallet/payment anywhere.",
+  "version": 1,
+  "seed": 420691,
+  "size": { "worldRadius": 520, "groundSize": 1200 },
+  "palette": {
+    "gold": "#D4AF37",
+    "grassA": "#6f8f4a",
+    "grassB": "#8fae57",
+    "terrainLow": "#5f7b3e",
+    "terrainHigh": "#b7a86a",
+    "water": "#2b6f78",
+    "sand": "#cdb98a"
+  },
+  "timeOfDay": {
+    "cycleMinutes": 20,
+    "startPhase": 0.34,
+    "keyframes": [
+      { "t": 0.00, "name": "night",       "sky": "#0b1026", "horizon": "#1b2447", "sun": "#20306a", "ambient": "#1a2244", "fog": "#0e1430", "sunElev": -0.25, "bloom": 0.0 },
+      { "t": 0.18, "name": "dawn",        "sky": "#2a2f5a", "horizon": "#b06a5a", "sun": "#ffb27a", "ambient": "#5a4f66", "fog": "#6a5a70", "sunElev": 0.02, "bloom": 0.9 },
+      { "t": 0.27, "name": "morning",     "sky": "#6fa7d6", "horizon": "#cfe0ec", "sun": "#ffe3b0", "ambient": "#a9c3d6", "fog": "#cfe0ec", "sunElev": 0.22, "bloom": 0.1 },
+      { "t": 0.50, "name": "noon",        "sky": "#8ec3f0", "horizon": "#dff0fb", "sun": "#fff6e0", "ambient": "#cfe4f2", "fog": "#dff0fb", "sunElev": 0.95, "bloom": 0.0 },
+      { "t": 0.70, "name": "goldenHour",  "sky": "#e9a86a", "horizon": "#ffcf8f", "sun": "#ffd79a", "ambient": "#d8a977", "fog": "#f0c79a", "sunElev": 0.14, "bloom": 0.6 },
+      { "t": 0.80, "name": "sunset",      "sky": "#c9643f", "horizon": "#ff9d5c", "sun": "#ff8a4a", "ambient": "#b56a52", "fog": "#d98b63", "sunElev": 0.03, "bloom": 1.0 },
+      { "t": 0.88, "name": "dusk",        "sky": "#4a3a6a", "horizon": "#a85a6a", "sun": "#d06a6a", "ambient": "#4a3f5e", "fog": "#4a3a5a", "sunElev": -0.04, "bloom": 0.7 },
+      { "t": 1.00, "name": "night",       "sky": "#0b1026", "horizon": "#1b2447", "sun": "#20306a", "ambient": "#1a2244", "fog": "#0e1430", "sunElev": -0.25, "bloom": 0.0 }
+    ]
+  },
+  "wind": { "strength": 0.9, "direction": 0.6, "gust": 0.35 },
+  "densities": {
+    "grassInstances": 42000,
+    "grassRadius": 150,
+    "wildflowerInstances": 6400,
+    "treeInstances": 420,
+    "treeSpecies": 4,
+    "reedInstances": 900,
+    "lilyPadInstances": 160,
+    "birds": 48,
+    "butterflies": 120,
+    "dragonflies": 44,
+    "fish": 40,
+    "fireflies": 120,
+    "groundAnimals": 3,
+    "waterfowl": 9,
+    "mountainRings": 2
+  },
+  "lake": {
+    "name": "the lake",
+    "center": [ -120, 0, -40 ],
+    "radius": 150,
+    "depth": 7,
+    "shoreFoam": true
+  },
+  "commons": {
+    "name": "Chatter Bots Commons",
+    "center": [ 10, 0, 40 ],
+    "description": "An open metaverse gathering place on the shore of the lake. A single lakeside meeting bench sits beside the dock, right next to the water — the pre-agreed spot where bots and human visitors meet to discuss business and develop solutions together. Open to all; separate from private lots.",
+    "firepit": [ 14, 0, 52 ],
+    "seatAnchors": [
+      { "id": "lakeside-bench", "label": "Lakeside Bench", "type": "bench", "center": [ 15, 0, 40 ], "facing": 0,
+        "slots": [
+          { "id": "lb-1", "pos": [ 13.9, 0, 39.95 ], "faceTo": [ 13.9, 0, 28 ] },
+          { "id": "lb-2", "pos": [ 16.1, 0, 39.95 ], "faceTo": [ 16.1, 0, 28 ] }
+        ]
+      }
+    ]
+  },
+  "landmarks": {
+    "$comment": "Named meeting spots + tolerant aliases. 'canonical' entries define a point (and optional seat anchor); 'aliases' map spoken names to a canonical key. All matching is case-insensitive.",
+    "canonical": {
+      "lakeside-bench": { "label": "Lakeside Bench",  "pos": [ 15, 0, 40 ], "seatAnchor": "lakeside-bench" },
+      "dock":           { "label": "Meeting Dock",    "pos": [ 8, 0, 40 ],   "seatAnchor": null },
+      "lake":           { "label": "the lake",        "pos": [ -120, 0, -40 ], "seatAnchor": null },
+      "commons":        { "label": "Chatter Bots Commons", "pos": [ 10, 0, 40 ], "seatAnchor": null }
+    },
+    "aliases": {
+      "the dock": "dock",
+      "meeting dock": "dock",
+      "the meeting dock": "dock",
+      "the bench": "lakeside-bench",
+      "bench": "lakeside-bench",
+      "lakeside bench": "lakeside-bench",
+      "the lakeside bench": "lakeside-bench",
+      "the bench at the lake": "lakeside-bench",
+      "bench by the lake": "lakeside-bench",
+      "the bench by the lake": "lakeside-bench",
+      "shore": "lakeside-bench",
+      "the shore": "lakeside-bench",
+      "lakeshore": "lakeside-bench",
+      "the lakeshore": "lakeside-bench",
+      "lake": "lake",
+      "the lake": "lake",
+      "the bot farm commons": "commons",
+      "the commons": "commons"
+    }
+  },
+  "zoning": {
+    "currency": { "display": "TOKEN", "fiatPerToken": 0.38, "fiatSymbol": "$" },
+    "tiers": [
+      {
+        "id": "waterfront",
+        "name": "Lakefront Waterfront",
+        "blurb": "Premium shoreline parcels on the lake. The crown of Chatter Bots.",
+        "totalAcres": 42069,
+        "reservedAcres": 444,
+        "reservedName": "Warden's Reserve (reserved, not for sale)",
+        "lotSizeAcres": 2.5,
+        "pricePerLotToken": 1850000,
+        "color": "#2b6f78",
+        "mapRect": [ -300, -230, 300, 20 ]
+      },
+      {
+        "id": "countryside",
+        "name": "Countryside / Meadow",
+        "blurb": "Off-lake meadow estates. Larger lots, gentler prices, big skies.",
+        "totalAcres": 18000,
+        "reservedAcres": 0,
+        "lotSizeAcres": 5.0,
+        "pricePerLotToken": 620000,
+        "color": "#8fae57",
+        "mapRect": [ -300, 20, 300, 230 ]
+      },
+      {
+        "id": "downtown",
+        "name": "Inner-City / Downtown",
+        "blurb": "The dense, walkable core. Smallest, densest, most affordable parcels.",
+        "totalAcres": 3600,
+        "reservedAcres": 0,
+        "lotSizeAcres": 0.25,
+        "pricePerLotToken": 95000,
+        "color": "#b08a5a",
+        "mapRect": [ 180, -40, 300, 120 ]
+      }
+    ]
+  },
+  "botDefaults": {
+    "maxSpeed": 6.0,
+    "loopBreaker": { "maxTurns": 4, "maxSeconds": 60 },
+    "dailyBrainTokenBudget": 60000,
+    "rateLimit": { "actionsPerSec": 8, "msgsPerMin": 20, "maxChars": 500 }
+  },
+  "visitorLimits": { "maxSpeed": 7.5, "actionsPerSec": 20, "msgsPerMin": 30, "maxChars": 500 },
+  "quality": { "default": "high", "allowAutoStepDown": true }
+}

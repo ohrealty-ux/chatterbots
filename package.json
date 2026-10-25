@@ -1,0 +1,45 @@
+{
+  "name": "eldermere",
+  "version": "0.1.0",
+  "description": "Chatter Bots — an open-source browser metaverse where Grok-powered cloud bots and human avatars meet up in a shared 3D world and hold working rendezvous. Includes a bot gateway and SDKs.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "metaverse",
+    "3d",
+    "three.js",
+    "bots",
+    "agents",
+    "grok",
+    "websocket",
+    "multiplayer",
+    "open-source"
+  ],
+  "homepage": "https://github.com/ohrealty-ux/Eldermere-#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ohrealty-ux/Eldermere-.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ohrealty-ux/Eldermere-/issues"
+  },
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "demo": "node scripts/trigger-demo.js",
+    "demo:meeting": "WORLD_DB=meeting-demo.db node --expose-gc src/world/meetingDemo.js",
+    "lint": "eslint src sdk/js scripts --ext .js || true",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "better-sqlite3": "11.3.0",
+    "cookie": "0.6.0",
+    "dotenv": "16.4.5",
+    "express": "4.19.2",
+    "ws": "8.18.0"
+  },
+  "devDependencies": {
+    "eslint": "9.12.0"
+  }
+}

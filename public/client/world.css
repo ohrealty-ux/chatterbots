@@ -1,0 +1,124 @@
+:root{ --gold:#D4AF37; --ink:#0d1117; --panel:rgba(12,16,26,.72); }
+*{ box-sizing:border-box; }
+html,body{ margin:0; height:100%; overflow:hidden; background:#0b1026; color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+#scene{ position:fixed; inset:0; width:100%; height:100%; display:block; touch-action:none; }
+.hidden{ display:none !important; }
+
+.overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(ellipse at 50% 30%, rgba(40,30,60,.5), rgba(8,10,22,.92)); z-index:20;
+  padding:20px; overflow-y:auto; }
+.join-card{ background:var(--panel); backdrop-filter:blur(10px); border:1px solid rgba(212,175,55,.35);
+  border-radius:18px; padding:26px 26px; max-width:420px; width:100%; text-align:center; margin:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.5); }
+.join-card .wordmark{ width:220px; max-width:80%; margin-bottom:8px; }
+.join-card h1{ font-size:1.5rem; margin:.3rem 0; letter-spacing:.5px; }
+.join-card p{ color:#c7cad3; font-size:.92rem; margin:.4rem 0 1rem; }
+.join-card label{ display:block; text-align:left; font-size:.78rem; color:#9aa0ad; margin-bottom:4px; }
+.join-card input{ width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06); color:#fff; font-size:1rem; margin-bottom:14px; }
+.join-card button{ width:100%; padding:13px; border:none; border-radius:10px; cursor:pointer;
+  background:linear-gradient(135deg,var(--gold),#b8912e); color:#1a1405; font-weight:700; font-size:1rem; }
+.join-card button:hover{ filter:brightness(1.08); }
+.join-card .back{ display:inline-block; margin-top:14px; color:#9aa0ad; text-decoration:none; font-size:.85rem; }
+.join-card .tip{ font-size:.72rem; color:#7f8694; margin-top:14px; }
+.join-card .beacon-plug{ margin:12px 0 0; }
+.join-card .beacon-plug button{ width:auto; display:inline-block; background:none; border:1px solid rgba(212,175,55,.35); color:#e6c35a; font-size:.82rem; padding:7px 14px; border-radius:999px; cursor:pointer; font-weight:600; }
+.join-card .beacon-plug button:hover{ border-color:var(--gold); color:#f3d473; }
+.join-card .repo-link{ margin:10px 0 0; }
+.join-card .repo-link a{ color:#9fb4c7; font-size:.8rem; text-decoration:none; border-bottom:1px solid rgba(159,180,199,.35); padding-bottom:1px; }
+.join-card .repo-link a:hover{ color:#d7e4f0; border-color:#d7e4f0; }
+
+#topbar{ position:fixed; top:10px; left:10px; right:10px; display:flex; align-items:center; gap:8px; z-index:12; }
+.hud-wordmark{ height:26px; opacity:.95; filter:drop-shadow(0 1px 3px rgba(0,0,0,.6)); }
+.pill{ background:var(--panel); border:1px solid rgba(255,255,255,.14); color:#fff; border-radius:999px;
+  padding:5px 11px; font-size:.78rem; backdrop-filter:blur(6px); }
+.btn{ cursor:pointer; }
+#topbar .btn:hover{ border-color:var(--gold); }
+#quality{ margin-left:auto; }
+/* Prominent HUD "Invite to Meet" button — stands out from the plain pills */
+.invite-cta{ background:linear-gradient(135deg,var(--gold),#b8912e); color:#1a1405; border:none;
+  border-radius:999px; padding:7px 16px; font-size:.86rem; font-weight:800; cursor:pointer;
+  box-shadow:0 2px 10px rgba(212,175,55,.45); letter-spacing:.2px; white-space:nowrap; }
+.invite-cta:hover{ filter:brightness(1.08); }
+.invite-cta:active{ transform:translateY(1px); }
+
+#chatpanel{ position:fixed; left:10px; bottom:10px; width:min(380px,70vw); z-index:12; }
+#chatlog{ max-height:30vh; overflow-y:auto; display:flex; flex-direction:column; gap:4px; margin-bottom:6px; }
+#chatlog .line{ background:var(--panel); border-radius:8px; padding:5px 9px; font-size:.82rem; max-width:100%;
+  word-wrap:break-word; }
+#chatlog .nm{ font-weight:700; }
+#chatlog .bot .nm{ color:var(--gold); }
+#chatform{ display:flex; gap:6px; }
+#chatform input{ flex:1; padding:10px 12px; border-radius:9px; border:1px solid rgba(255,255,255,.18);
+  background:var(--panel); color:#fff; font-size:.9rem; }
+#chatform button{ padding:0 14px; border:none; border-radius:9px; background:var(--gold); color:#1a1405; font-weight:700; cursor:pointer; }
+
+#nameplates{ position:fixed; inset:0; pointer-events:none; z-index:8; overflow:hidden; }
+.plate{ position:absolute; transform:translate(-50%,-100%); text-align:center; pointer-events:none;
+  transition:opacity .2s; will-change:transform; }
+.plate .nm{ display:inline-block; background:rgba(12,16,26,.78); padding:2px 8px; border-radius:7px;
+  font-size:.74rem; white-space:nowrap; border:1px solid rgba(255,255,255,.12); }
+.plate.bot .nm{ border-color:var(--gold); }
+.plate .tag{ display:inline-block; background:var(--gold); color:#1a1405; font-weight:800; font-size:.6rem;
+  padding:1px 5px; border-radius:5px; margin-left:4px; letter-spacing:.5px; }
+.plate .owner{ display:block; font-size:.6rem; color:#b9bdc8; margin-top:1px; }
+.plate .status{ display:block; font-size:.62rem; margin-top:1px; }
+.plate .bubble{ display:block; max-width:220px; margin:4px auto 0; background:#fff; color:#15181f;
+  padding:6px 10px; border-radius:12px; font-size:.78rem; box-shadow:0 4px 14px rgba(0,0,0,.35);
+  word-wrap:break-word; }
+.st-idle{ color:#9aa0ad; } .st-working{ color:#6fc0ff; } .st-done{ color:#7ddf8f; } .st-needs_attention{ color:#ffb24a; }
+
+#stick{ position:fixed; left:24px; bottom:120px; width:120px; height:120px; border-radius:50%;
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.2); z-index:13; touch-action:none; }
+#stick-knob{ position:absolute; left:35px; top:35px; width:50px; height:50px; border-radius:50%;
+  background:rgba(212,175,55,.8); }
+#talktip{ position:fixed; left:50%; top:16%; transform:translateX(-50%); background:var(--panel);
+  padding:8px 14px; border-radius:10px; font-size:.85rem; z-index:12; border:1px solid rgba(212,175,55,.4); }
+@media(max-width:760px){ #chatpanel{ width:62vw; } .hud-wordmark{ height:20px; } }
+
+/* landing lede — states what Chatter Bots is */
+.join-card .lede{ font-size:1.05rem; font-weight:600; color:#efe7d2; margin:.2rem 0 .5rem; letter-spacing:.2px; }
+
+
+/* ───────── home copy ───────── */
+.join-card .desc{ font-size:.9rem; line-height:1.5; color:#e7e9ee; margin:.4rem 0 1rem; text-align:left; }
+
+/* ───────── invite / share flow (high contrast, large, few words) ───────── */
+.invite-block{ background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22);
+  border-radius:14px; padding:14px 14px 12px; margin:6px 0 16px; }
+.invite-prompt{ font-size:1rem; font-weight:800; color:#ffffff; margin:0 0 10px; text-align:center; letter-spacing:.2px; }
+
+/* "Before you meet" intake guidance */
+.intake-guide{ background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.14); border-radius:11px;
+  padding:11px 14px; margin:0 0 12px; text-align:left; }
+.intake-title{ margin:0 0 6px; font-size:.86rem; font-weight:800; color:var(--gold); }
+.intake-list{ margin:0; padding-left:1.15em; }
+.intake-list li{ font-size:.82rem; color:#eef1f6; line-height:1.5; }
+
+/* Primary call-to-action: open the /meet intake page */
+.primary-cta{ display:block; width:100%; box-sizing:border-box; text-align:center; text-decoration:none;
+  padding:15px 12px; margin:0 0 12px; border:none; border-radius:12px; cursor:pointer;
+  background:linear-gradient(135deg,var(--gold),#b8912e); color:#1a1405; font-weight:800; font-size:1rem;
+  box-shadow:0 4px 14px rgba(212,175,55,.35); transition:transform .06s ease, filter .12s ease; }
+.primary-cta:hover{ filter:brightness(1.07); }
+.primary-cta:active{ transform:translateY(1px); }
+
+.share-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.share-btn, .join-card .share-btn{ width:100%; padding:14px 10px; border:none; border-radius:11px; cursor:pointer;
+  background:#ffffff; color:#14181f; font-weight:800; font-size:.95rem; line-height:1;
+  box-shadow:0 2px 8px rgba(0,0,0,.35); transition:transform .06s ease, filter .12s ease; }
+.share-btn:hover{ filter:brightness(.94); }
+.share-btn:active{ transform:translateY(1px); }
+.share-status{ min-height:1em; margin:10px 0 0; font-size:.82rem; font-weight:700; color:#8ff0a6; text-align:center; }
+
+/* Invite modal — reopened from the HUD */
+#invitemodal{ z-index:30; }
+.invite-card{ background:#141926; border:1px solid rgba(255,255,255,.22); border-radius:18px;
+  padding:26px 24px 20px; max-width:420px; width:100%; text-align:center; margin:auto; box-shadow:0 24px 70px rgba(0,0,0,.6); }
+.invite-card h2{ font-size:1.15rem; font-weight:800; color:#ffffff; margin:0 0 16px; letter-spacing:.2px; }
+.invite-card .close-btn{ margin-top:16px; width:100%; padding:13px; border:none; border-radius:11px; cursor:pointer;
+  background:#2b3344; color:#ffffff; font-weight:800; font-size:.95rem; }
+.invite-card .close-btn:hover{ filter:brightness(1.12); }
+
+@media(max-width:420px){ .share-row{ grid-template-columns:1fr; } }

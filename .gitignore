@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+# Environment / secrets — never commit
+.env
+.env.local
+# Runtime data (databases, logs, transcripts, tokens)
+data/
+*.db
+*.db-shm
+*.db-wal
+*.log
+# Build artifacts / archives
+*.zip
+# OS / editor cruft
+.DS_Store
+*.swp
