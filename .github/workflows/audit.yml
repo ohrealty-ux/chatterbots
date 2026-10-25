@@ -1,0 +1,20 @@
+name: audit
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  schedule:
+    - cron: '0 7 * * 1'
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - name: Production dependency audit (no high/critical)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Syntax check
+        run: for f in $(find src scripts test -name '*.js'); do node --check "$f"; done
