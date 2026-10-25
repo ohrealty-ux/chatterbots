@@ -1,16 +1,27 @@
-# Dependencies
-node_modules/
-# Environment / secrets — never commit
+# secrets
 .env
-.env.local
-# Runtime data (databases, logs, transcripts, tokens)
+.env.*
+!.env.example
+# deps
+node_modules/
+# runtime data / persistence (whole data dir — DB, transcripts, tokens)
 data/
-*.db
-*.db-shm
-*.db-wal
 *.log
-# Build artifacts / archives
-*.zip
-# OS / editor cruft
+# OS
 .DS_Store
-*.swp
+Thumbs.db
+# large binaries / future assets
+*.glb.bak
+*.zip
+
+# ── PRIVATE DEPLOYMENT ASSETS (never in the open-source tree) ──
+# The engine is brand-neutral ("Eldermere"). A specific private deployment's
+# storefront, brand imagery, and lore overlay are layered in at deploy time only.
+# Your own per-deployment config overlays (branding, storefront, lore) — keep these private.
+config/*.json
+public/storefront/
+public/brand/
+data/demo-bot-tokens.txt
+# Private optional modules and local secrets — never committed
+secrets.*
+*.keystore

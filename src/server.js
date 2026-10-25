@@ -68,6 +68,7 @@ if (NEUTRAL) {
 const HAS_STOREFRONT = !NEUTRAL && fs.existsSync(path.join(PUBLIC, 'storefront', 'index.html'));
 const SERVE_BRAND = !NEUTRAL && fs.existsSync(path.join(PUBLIC, 'brand'));
 const PUBLIC_HOST = (process.env.PUBLIC_HOST || '').trim();
+const FRAME_ANCESTORS_SET = (process.env.FRAME_ANCESTORS || '').trim().length > 0;
 
 // ───────── admin password hash required in production ─────────
 if (PROD && !passwordHashConfigured()) {
@@ -144,7 +145,9 @@ function wsOriginAllowed(req) {
 app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy', cspHeader(PUBLIC_HOST));
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
+  // When FRAME_ANCESTORS is set, the single CSP header controls framing; X-Frame-Options: DENY
+  // would override it and block the allowlisted ancestors, so omit XFO in that case.
+  if (!FRAME_ANCESTORS_SET) res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
