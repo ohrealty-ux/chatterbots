@@ -78,6 +78,20 @@ a{ color:var(--gold); }
 .loc-lk{ font-size:.95rem; }
 .loc-soon{ color:#cdd4e0; font-size:.86rem; margin-top:5px; line-height:1.45; }
 .loc-now{ color:#9fe6b4; font-size:.86rem; margin-top:4px; font-weight:600; }
+/* Location cards — large tappable radio group (A). */
+.loc-cards{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; }
+@media (max-width:560px){ .loc-cards{ grid-template-columns:1fr; } }
+.loc-card{ display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left;
+  min-height:56px; width:100%; box-sizing:border-box; padding:12px 14px; cursor:pointer;
+  border:2px solid #3a4152; border-radius:12px; background:#181c24; color:#f4ecd6;
+  font-family:inherit; transition:border-color .12s, background .12s, box-shadow .12s; }
+.loc-card:hover{ border-color:#687084; }
+.loc-card:focus-visible{ outline:3px solid #9fe6b4; outline-offset:2px; }
+.loc-card .loc-card-title{ font-weight:700; font-size:1rem; color:#f4ecd6; }
+.loc-card .loc-card-help{ font-size:.82rem; color:#cdd4e0; font-weight:600; line-height:1.4; }
+.loc-card.sel{ border-color:#9fe6b4; background:#22312a; box-shadow:0 0 0 1px #9fe6b4 inset; }
+.loc-card.sel .loc-card-title{ color:#dffbe8; }
+.loc-card.sel .loc-card-help{ color:#bfe9cc; }
 .field.check .check-row{ display:flex; align-items:flex-start; gap:10px; font-weight:600; font-size:.88rem;
   color:#eef1f7; line-height:1.45; cursor:pointer; margin:0; }
 .field.check input[type=checkbox]{ width:18px; height:18px; margin:2px 0 0; flex:0 0 auto; accent-color:var(--gold); cursor:pointer; }

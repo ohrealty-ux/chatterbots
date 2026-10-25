@@ -311,17 +311,56 @@
     pick.appendChild(dIn); pick.appendChild(hIn); pick.appendChild(zIn);
     tWrap.appendChild(pick);
     var lWrap = el('div', 'field');
-    lWrap.appendChild(el('label', null, 'Location'));
+    var lLabel = el('label', null, 'Location'); lLabel.id = 'f_' + party + '_locLabel';
+    lWrap.appendChild(lLabel);
     lWrap.appendChild(el('span', 'help', 'Pick where the bots meet.'));
-    // Location picker: two live choices. Each shows its own attire helper line.
-    var lIn = el('select'); lIn.id = 'f_' + party + '_loc'; lIn.name = 'location'; lIn.className = 'tz';
-    LOCATION_OPTS.forEach(function (o) { var opt = el('option', null, o.label); opt.value = o.v; lIn.appendChild(opt); });
+    // Location picker: two large tappable cards, exposed as an accessible radio group.
+    // `lIn` remains a value-holder (hidden) so existing save/sync code is unchanged.
+    var lIn = el('input'); lIn.type = 'hidden'; lIn.id = 'f_' + party + '_loc'; lIn.name = 'location';
     lIn.value = (d.location === OFFICE_LOC) ? OFFICE_LOC : LAKE_LOC;
     lWrap.appendChild(lIn);
-    var locHelp = el('div', 'loc-now', '');
-    lWrap.appendChild(locHelp);
     function helpFor(v) { for (var i = 0; i < LOCATION_OPTS.length; i++) { if (LOCATION_OPTS[i].v === v) return LOCATION_OPTS[i].help; } return ''; }
-    locHelp.textContent = helpFor(lIn.value);
+    var cardGroup = el('div', 'loc-cards');
+    cardGroup.setAttribute('role', 'radiogroup');
+    cardGroup.setAttribute('aria-labelledby', lLabel.id);
+    var cards = [];
+    LOCATION_OPTS.forEach(function (o) {
+      var card = el('button', 'loc-card');
+      card.type = 'button';
+      card.setAttribute('role', 'radio');
+      card.dataset.val = o.v;
+      var title = el('span', 'loc-card-title', o.label);
+      var sub = el('span', 'loc-card-help', o.help);
+      card.appendChild(title); card.appendChild(sub);
+      cardGroup.appendChild(card);
+      cards.push(card);
+    });
+    function paintCards() {
+      cards.forEach(function (c) {
+        var on = (c.dataset.val === lIn.value);
+        c.classList.toggle('sel', on);
+        c.setAttribute('aria-checked', on ? 'true' : 'false');
+        c.tabIndex = on ? 0 : -1;
+      });
+    }
+    function chooseLoc(v) {
+      lIn.value = v;
+      paintCards();
+      if (typeof lIn.onchange === 'function') lIn.onchange();
+      var ev; try { ev = new Event('change'); } catch (e) { ev = document.createEvent('Event'); ev.initEvent('change', true, true); }
+      lIn.dispatchEvent(ev);
+    }
+    cards.forEach(function (c, idx) {
+      c.addEventListener('click', function () { chooseLoc(c.dataset.val); c.focus(); });
+      c.addEventListener('keydown', function (e) {
+        var k = e.key;
+        if (k === ' ' || k === 'Enter' || k === 'Spacebar') { e.preventDefault(); chooseLoc(c.dataset.val); }
+        else if (k === 'ArrowRight' || k === 'ArrowDown') { e.preventDefault(); var n = cards[(idx + 1) % cards.length]; chooseLoc(n.dataset.val); n.focus(); }
+        else if (k === 'ArrowLeft' || k === 'ArrowUp') { e.preventDefault(); var p = cards[(idx - 1 + cards.length) % cards.length]; chooseLoc(p.dataset.val); p.focus(); }
+      });
+    });
+    lWrap.appendChild(cardGroup);
+    paintCards();
     sched.appendChild(tWrap); sched.appendChild(lWrap); form.appendChild(sched);
 
     // Money (private to you) — shown only when the office is chosen. All fields optional.
