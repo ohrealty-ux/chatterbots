@@ -337,8 +337,9 @@
     var cls = $('beaconClose'); if (cls) cls.addEventListener('click', close);
     modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
 
-    var copyBtn = $('beaconCopy');
-    if (copyBtn) {
+    function wireCopy(id) {
+      var copyBtn = $(id);
+      if (!copyBtn) return;
       copyBtn.addEventListener('click', function () {
         var text = copyBtn.getAttribute('data-copy') || '';
         var done = $('beaconCopied');
@@ -348,6 +349,7 @@
           .catch(function () { try { var t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); ok(); } catch (e) { if (done) done.textContent = 'Copy failed — select the message and copy it manually.'; } });
       });
     }
+    wireCopy('beaconCopy'); wireCopy('beaconCopyJoin');
   }
 
   // ---- boot ----

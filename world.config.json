@@ -62,6 +62,12 @@
           { "id": "lb-1", "pos": [ 13.9, 0, 39.95 ], "faceTo": [ 13.9, 0, 28 ] },
           { "id": "lb-2", "pos": [ 16.1, 0, 39.95 ], "faceTo": [ 16.1, 0, 28 ] }
         ]
+      },
+      { "id": "business-office", "label": "Prestigious Business Office", "type": "office", "center": [ 82, 0, 86 ], "facing": 0,
+        "slots": [
+          { "id": "bo-1", "pos": [ 82, 0, 84.4 ], "faceTo": [ 82, 0, 87.6 ] },
+          { "id": "bo-2", "pos": [ 82, 0, 87.6 ], "faceTo": [ 82, 0, 84.4 ] }
+        ]
       }
     ]
   },
@@ -69,6 +75,7 @@
     "$comment": "Named meeting spots + tolerant aliases. 'canonical' entries define a point (and optional seat anchor); 'aliases' map spoken names to a canonical key. All matching is case-insensitive.",
     "canonical": {
       "lakeside-bench": { "label": "Lakeside Bench",  "pos": [ 15, 0, 40 ], "seatAnchor": "lakeside-bench" },
+      "business-office": { "label": "Prestigious Business Office", "pos": [ 82, 0, 86 ], "seatAnchor": "business-office" },
       "dock":           { "label": "Meeting Dock",    "pos": [ 8, 0, 40 ],   "seatAnchor": null },
       "lake":           { "label": "the lake",        "pos": [ -120, 0, -40 ], "seatAnchor": null },
       "commons":        { "label": "Chatter Bots Commons", "pos": [ 10, 0, 40 ], "seatAnchor": null }
@@ -84,6 +91,17 @@
       "the bench at the lake": "lakeside-bench",
       "bench by the lake": "lakeside-bench",
       "the bench by the lake": "lakeside-bench",
+      "the office": "business-office",
+      "office": "business-office",
+      "the business office": "business-office",
+      "business office": "business-office",
+      "business-office": "business-office",
+      "prestigious office": "business-office",
+      "the prestigious office": "business-office",
+      "prestigious business office": "business-office",
+      "the prestigious business office": "business-office",
+      "boardroom": "business-office",
+      "the boardroom": "business-office",
       "shore": "lakeside-bench",
       "the shore": "lakeside-bench",
       "lakeshore": "lakeside-bench",

@@ -170,9 +170,17 @@ export function cspHeader(publicHost) {
   const host = (publicHost || process.env.PUBLIC_HOST || '').trim();
   const connect = ["'self'"];
   if (host) connect.push(`wss://${host}`);
+  // frame-ancestors: 'none' by default. If FRAME_ANCESTORS lists origins, allow them (always
+  // alongside 'self'). A bare '*' / match-all wildcard is NEVER accepted; a '*.' subdomain
+  // wildcard (e.g. https://*.abacus.ai, needed for the embedded preview) IS accepted.
+  const okSource = (o) => {
+    if (!o || o === '*') return false;
+    const stars = o.split('*').length - 1;
+    return stars === 0 || (stars === 1 && o.includes('*.'));
+  };
   const faEnv = (process.env.FRAME_ANCESTORS || '').split(',').map(s => s.trim())
-    .filter(o => o && o !== '*' && !o.includes('*'));
-  const frameAncestors = faEnv.length ? faEnv.join(' ') : "'none'";
+    .filter(okSource).filter(o => o !== "'self'");
+  const frameAncestors = faEnv.length ? ["'self'", ...faEnv].join(' ') : "'none'";
   return [
     "default-src 'self'",
     "script-src 'self'",

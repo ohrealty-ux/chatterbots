@@ -68,6 +68,7 @@ if (NEUTRAL) {
 const HAS_STOREFRONT = !NEUTRAL && fs.existsSync(path.join(PUBLIC, 'storefront', 'index.html'));
 const SERVE_BRAND = !NEUTRAL && fs.existsSync(path.join(PUBLIC, 'brand'));
 const PUBLIC_HOST = (process.env.PUBLIC_HOST || '').trim();
+const FRAME_ANCESTORS_SET = (process.env.FRAME_ANCESTORS || '').trim().length > 0;
 
 // ───────── admin password hash required in production ─────────
 if (PROD && !passwordHashConfigured()) {
@@ -144,7 +145,9 @@ function wsOriginAllowed(req) {
 app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy', cspHeader(PUBLIC_HOST));
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
+  // When FRAME_ANCESTORS is set, the single CSP header controls framing; X-Frame-Options: DENY
+  // would override it and block the allowlisted ancestors, so omit XFO in that case.
+  if (!FRAME_ANCESTORS_SET) res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
@@ -263,8 +266,32 @@ function cleanPrep(body) {
     location: sanitizeText(body?.location || '', 120) || 'Lakeside bench',
     research: body?.research === true || body?.research === 'true' || body?.research === 'on',
     beaconNotify: body?.beaconNotify === true || body?.beaconNotify === 'true' || body?.beaconNotify === 'on',
+    money: cleanMoney(body?.money),
     submittedAt: Date.now(),
   };
+}
+// Money / negotiation intake. The values arrive already validated by the zod `money` schema
+// (numbers in range, 2-decimal, enums). We only normalize + sanitize the free-text deadline.
+// Returns undefined when nothing was entered so empty prep stays clean. Values are NEVER
+// concatenated into instruction strings — they are surfaced as structured untrusted data.
+function cleanMoney(m) {
+  if (!m || typeof m !== 'object') return undefined;
+  const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
+  const out = {
+    amountAnchor: num(m.amountAnchor),
+    amountIdeal: num(m.amountIdeal),
+    amountWalkaway: num(m.amountWalkaway),
+    askAbove: num(m.askAbove),
+    paymentStyle: m.paymentStyle || undefined,
+    deadline: m.deadline ? sanitizeText(m.deadline, 40) : undefined,
+    trades: Array.isArray(m.trades) ? m.trades.slice(0, 10) : undefined,
+    reveal: m.reveal || 'nothing',
+  };
+  // drop if entirely empty (only the default reveal present)
+  const hasAny = out.amountAnchor !== undefined || out.amountIdeal !== undefined ||
+    out.amountWalkaway !== undefined || out.askAbove !== undefined ||
+    out.paymentStyle || out.deadline || (out.trades && out.trades.length);
+  return hasAny ? out : undefined;
 }
 // A meeting GET returns private fields (walk-away, authority) ONLY to the edit-key holder.
 function meetKeyOk(id, req) {
@@ -275,7 +302,10 @@ function meetKeyOk(id, req) {
 }
 function publicMeetingView(m) {
   if (!m) return m;
-  const strip = (p) => p ? { ...p, walkaway: undefined, authority: undefined } : p;
+  // The shared/public view NEVER carries a party's private negotiation data: walk-away text,
+  // authority level, or the whole money block (which holds the walk-away number + ask-above
+  // threshold). Each party's money is returned only to the edit-key holder for that party.
+  const strip = (p) => p ? { ...p, walkaway: undefined, authority: undefined, money: undefined } : p;
   return { ...m, parties: { A: strip(m.parties?.A), B: strip(m.parties?.B) } };
 }
 

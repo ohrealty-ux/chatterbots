@@ -356,6 +356,8 @@ function buildCommons(){
   const C=CFG.commons;
   // The single lakeside meeting bench — beside the dock, on the shore, facing the water.
   buildMeetingBench(C);
+  // The prestigious business office — a formal meeting spot on dry land, away from the lake.
+  buildOffice(C);
   // a nice stone path winding from the spawn clearing down to the dock/shore (kept open, not blocked)
   (function(){ const stone=new THREE.MeshStandardMaterial({color:'#9a9aa0',roughness:0.98}),
                      stoneDk=new THREE.MeshStandardMaterial({color:'#83838a',roughness:0.98});
@@ -397,6 +399,53 @@ function buildMeetingBench(C){
   // four sturdy legs
   [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>{ const leg=new THREE.Mesh(new THREE.BoxGeometry(0.12,SEATY,0.12),woodDk);
     leg.position.set(sx*(LEN/2-0.2),SEATY/2-0.02,sz*(DEPTH/2-0.1)); leg.castShadow=true; g.add(leg); });
+}
+// A prestigious business office: a stone plinth, a polished conference desk, two executive
+// chairs (each clickable → its own seat slot), a privacy screen, and a plant. Procedural boxes,
+// shared materials. Chairs register into seatMarkers exactly like the bench halves.
+function buildOffice(C){
+  const bo=(C.seatAnchors||[]).find(s=>s.id==='business-office'); if(!bo) return;
+  const [cx,,cz]=bo.center; const gh=terrainHeight(cx,cz); if(gh<0.1) return;
+  const g=new THREE.Group(); g.position.set(cx,gh,cz); g.rotation.y=(bo.facing||0); scene.add(g);
+  // shared materials
+  const marble=new THREE.MeshStandardMaterial({color:'#e8e4da',roughness:0.4,metalness:0.05});
+  const wood  =new THREE.MeshStandardMaterial({color:'#5b3a22',roughness:0.55});
+  const woodTop=new THREE.MeshStandardMaterial({color:'#6e4a2c',roughness:0.35,metalness:0.1});
+  const leather=new THREE.MeshStandardMaterial({color:'#23262d',roughness:0.6});
+  const gold   =new THREE.MeshStandardMaterial({color:'#D4AF37',roughness:0.3,metalness:0.6});
+  // soft contact shadow
+  const shadow=new THREE.Mesh(new THREE.CircleGeometry(3.4,32), new THREE.MeshBasicMaterial({color:0x100d06,transparent:true,opacity:0.24,depthWrite:false}));
+  shadow.rotation.x=-Math.PI/2; shadow.position.set(0,0.03,0); g.add(shadow);
+  // stone plinth / floor pad
+  const pad=new THREE.Mesh(new THREE.BoxGeometry(6.0,0.18,6.0),marble); pad.position.set(0,0.09,0); pad.receiveShadow=true; g.add(pad);
+  const trim=new THREE.Mesh(new THREE.BoxGeometry(6.2,0.08,6.2),gold); trim.position.set(0,0.04,0); g.add(trim);
+  // conference desk between the two chairs (long axis east–west)
+  const deskTop=new THREE.Mesh(new THREE.BoxGeometry(2.6,0.12,1.2),woodTop); deskTop.position.set(0,0.93,0); deskTop.castShadow=true; deskTop.receiveShadow=true; g.add(deskTop);
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>{ const leg=new THREE.Mesh(new THREE.BoxGeometry(0.14,0.9,0.14),wood);
+    leg.position.set(sx*1.15,0.46,sz*0.45); leg.castShadow=true; g.add(leg); });
+  // two executive chairs, one per seat slot, clickable
+  bo.slots.forEach((sl)=>{ const lx=sl.pos[0]-cx, lz=sl.pos[2]-cz;
+    const chair=new THREE.Group(); chair.position.set(lx,0,lz); g.add(chair);
+    // seat pad (this is the clickable mesh registered into seatMarkers)
+    const seat=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.14,0.7),leather);
+    seat.position.y=0.5; seat.castShadow=true; seat.receiveShadow=true;
+    seat.userData.seatId=sl.id; chair.add(seat);
+    seatMarkers.set(sl.id,{pos:[sl.pos[0],gh+0.5,sl.pos[2]],mesh:seat});
+    // backrest faces away from the desk → toward faceTo pointing at the desk means back is opposite
+    const backOnPlusZ=(sl.pos[2]>cz);                 // chair sits on +z side → back on +z edge
+    const bz=backOnPlusZ?0.32:-0.32;
+    const back=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.9,0.12),leather); back.position.set(0,0.95,bz); back.castShadow=true; chair.add(back);
+    // four legs
+    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>{ const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.5,6),wood);
+      leg.position.set(sx*0.28,0.25,sz*0.28); chair.add(leg); }); });
+  // a privacy screen / backdrop behind the desk (north edge) and a potted plant
+  const screen=new THREE.Mesh(new THREE.BoxGeometry(4.2,2.0,0.12),new THREE.MeshStandardMaterial({color:'#2c3340',roughness:0.7}));
+  screen.position.set(0,1.1,-2.7); screen.castShadow=true; g.add(screen);
+  const scTrim=new THREE.Mesh(new THREE.BoxGeometry(4.3,0.1,0.14),gold); scTrim.position.set(0,2.05,-2.7); g.add(scTrim);
+  (function(){ const pot=new THREE.Mesh(new THREE.CylinderGeometry(0.26,0.2,0.5,10),new THREE.MeshStandardMaterial({color:'#8a6a44',roughness:0.8}));
+    pot.position.set(2.3,0.35,-2.3); g.add(pot);
+    const leaf=new THREE.Mesh(new THREE.SphereGeometry(0.5,10,10),new THREE.MeshStandardMaterial({color:'#3f7a3a',roughness:0.9}));
+    leaf.position.set(2.3,0.95,-2.3); leaf.scale.set(1,1.3,1); leaf.castShadow=true; g.add(leaf); })();
 }
 // ───────── wooden meeting dock: extends over the water, beside the shore bench ─────────
 function buildDock(){
@@ -474,6 +523,15 @@ function avatarMesh(data){
   if(data.avatar){ const tex=loadTex(data.avatar); const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true})); spr.scale.set(1.1,1.1,1); spr.position.y=1.9; g.add(spr); head.visible=false; }
   if(isBot){ // status lantern above head
     const lan=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8),new THREE.MeshStandardMaterial({color:0x9aa0ad,emissive:0x333333,emissiveIntensity:1})); lan.position.y=2.4; g.add(lan); g.userData.lantern=lan; }
+  // formal attire overlay (cosmetic): a dark jacket over the torso + a gold tie. Hidden unless formal.
+  const suit=new THREE.Group();
+  const jacket=new THREE.Mesh(new THREE.CapsuleGeometry(0.39,0.78,4,8),new THREE.MeshStandardMaterial({color:0x242838,roughness:0.6}));
+  jacket.position.y=1.0; suit.add(jacket);
+  const lapel=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.06),new THREE.MeshStandardMaterial({color:0x1a1d29,roughness:0.6}));
+  lapel.position.set(0,1.18,0.33); suit.add(lapel);
+  const tie=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.5,0.05),new THREE.MeshStandardMaterial({color:0xD4AF37,roughness:0.4,metalness:0.4}));
+  tie.position.set(0,1.1,0.37); suit.add(tie);
+  suit.visible=(data.attire==='formal'); g.add(suit); g.userData.suit=suit;
   g.userData.data=data; g.userData.body=body;
   return g;
 }
@@ -527,6 +585,7 @@ function applyState(snap){
     if(e.st) e.st.textContent=ed.kind==='bot'?(ed.status||''):''; if(e.st) e.st.className='status st-'+(ed.status||'idle');
     if(e.mesh&&e.mesh.userData.lantern){ const c={idle:0x9aa0ad,working:0x6fc0ff,done:0x7ddf8f,needs_attention:0xffb24a}[ed.status||'idle'];
       e.mesh.userData.lantern.material.color.setHex(c); e.mesh.userData.lantern.material.emissive.setHex(c); }
+    if(e.mesh&&e.mesh.userData.suit){ e.mesh.userData.suit.visible=(ed.attire==='formal'); }
   }
   for(const [id,e] of remote){ if(!seen.has(id)){ if(e.mesh) scene.remove(e.mesh); if(e.plate) e.plate.remove(); remote.delete(id); } }
 }
@@ -614,13 +673,14 @@ function setupInvite(){
   const qb=document.getElementById('qaBeacon'); if(qb) qb.addEventListener('click',openBeaconStudio);
   const bc=document.getElementById('beaconClose'); if(bc) bc.addEventListener('click',closeBeaconStudio);
   if(bm) bm.addEventListener('click',e=>{ if(e.target===bm) closeBeaconStudio(); });
-  // Copy button: copies the exact message for the user's Grok bot.
-  const cp=document.getElementById('beaconCopy'); if(cp) cp.addEventListener('click',()=>{
+  // Copy buttons: copy the exact message (from data-copy) for the user's Grok bot.
+  const wireCopy=(id)=>{ const cp=document.getElementById(id); if(!cp) return; cp.addEventListener('click',()=>{
     const txt=cp.getAttribute('data-copy')||''; const note=document.getElementById('beaconCopied');
     const done=()=>{ if(note){ note.textContent='Copied ✓ — paste it into your Grok Bot app'; clearTimeout(note._t); note._t=setTimeout(()=>{ note.textContent=''; },3200);} };
     (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject())
       .then(done).catch(()=>{ try{ const t=document.createElement('textarea'); t.value=txt; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); done(); }catch{ if(note) note.textContent='Copy failed — select the message manually.'; } });
-  });
+  }); };
+  wireCopy('beaconCopy'); wireCopy('beaconCopyJoin');
   // quick-action buttons on the join card
   const qm=document.getElementById('qaMeet'); if(qm) qm.addEventListener('click',async e=>{ e.preventDefault(); const mid=await ensureMeeting(); window.location.href=mid?meetUrlFor(mid):(location.origin+'/meet'); });
   const qe=document.getElementById('qaEnter'); if(qe) qe.addEventListener('click',()=>{ const gn=document.getElementById('guestname'); if(gn) gn.focus(); });

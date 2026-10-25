@@ -3,7 +3,7 @@
 import { Lots } from '../db/db.js';
 
 export const ACTIONS = [
-  'join', 'leave', 'move_to', 'say', 'emote', 'set_status',
+  'join', 'leave', 'move_to', 'say', 'emote', 'set_status', 'set_attire',
   'look_at', 'follow', 'sit', 'stand', 'enter_lot', 'place_object',
   'propose_meeting', 'respond_meeting', 'list_meetings',
 ];
@@ -15,7 +15,7 @@ export function dispatch(world, botRow, entityId, action, args = {}) {
   const scopes = (botRow.scopes || '').split(',').map(s => s.trim());
   const scopeFor = {
     join: 'join', leave: 'join', move_to: 'move', say: 'say', emote: 'emote',
-    set_status: 'status', look_at: 'look', follow: 'follow', sit: 'sit', stand: 'sit',
+    set_status: 'status', set_attire: 'status', look_at: 'look', follow: 'follow', sit: 'sit', stand: 'sit',
     enter_lot: 'enter_lot', place_object: 'place_object',
   };
   if (scopeFor[action] && !scopes.includes(scopeFor[action])) return { ok: false, error: 'scope_denied' };
@@ -34,6 +34,8 @@ export function dispatch(world, botRow, entityId, action, args = {}) {
       return world.emote(entityId, String(args.emote || 'wave'));
     case 'set_status':
       return world.setStatus(entityId, String(args.status || 'idle'));
+    case 'set_attire':
+      return world.setAttire(entityId, String(args.style || ''));
     case 'look_at':
       return world.lookAt(entityId, args.target || args.coords || args.place);
     case 'follow':
@@ -88,6 +90,8 @@ export function toolDefs() {
     }, ['text']),
     t('emote', 'Play a brief emote.', { emote: { type: 'string', enum: ['wave', 'nod', 'cheer', 'think', 'point'] } }, ['emote']),
     t('set_status', 'Set your status badge.', { status: { type: 'string', enum: ['idle', 'working', 'done', 'needs_attention'] } }, ['status']),
+    t('set_attire', 'Set your avatar attire (cosmetic only, never required). Formal is suggested at the prestigious business office.',
+      { style: { type: 'string', enum: ['casual', 'formal'] } }, ['style']),
     t('look_at', 'Turn to face an entity, place, or coordinates.', {
       target: { type: 'string', description: 'entity id or named place' },
       coords: { type: 'array', items: { type: 'number' } },

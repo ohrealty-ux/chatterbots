@@ -124,7 +124,7 @@ export class World extends EventEmitter {
       id, name, kind, avatar: avatar || null, owner: owner || null, homeLot: homeLot || null,
       beacon: !!beacon,   // decorative nameplate glow only — never real beacon data
       pos: [spawnPt[0] + (Math.random() * 8 - 4), 0, spawnPt[2] + 8 + (Math.random() * 6)],
-      yaw: Math.PI, status: 'idle', seat: null, lotInside: null,
+      yaw: Math.PI, status: 'idle', seat: null, lotInside: null, attire: 'casual',
       target: null, followId: null, emote: null, lookAt: null,
       maxSpeed: kind === 'bot' ? this.config.botDefaults.maxSpeed : this.config.visitorLimits.maxSpeed,
       lastSeen: Date.now()
@@ -251,6 +251,17 @@ export class World extends EventEmitter {
     this._broadcastState();
     return { ok: true };
   }
+  // Cosmetic only: switch an avatar between 'casual' and 'formal' attire. Attire is never
+  // required anywhere — it only changes how the avatar is drawn.
+  setAttire(id, style) {
+    const ent = this.entities.get(id);
+    if (!ent) return { ok: false, error: 'no_entity' };
+    const valid = ['casual', 'formal'];
+    if (!valid.includes(style)) return { ok: false, error: 'bad_attire' };
+    ent.attire = style;
+    this._broadcastState();
+    return { ok: true, attire: style };
+  }
   emote(id, emote) {
     const ent = this.entities.get(id);
     if (!ent) return { ok: false };
@@ -336,7 +347,7 @@ export class World extends EventEmitter {
     for (const e of this.entities.values()) {
       ents.push({ id: e.id, name: e.name, kind: e.kind, avatar: e.avatar, owner: e.owner,
         pos: [Math.round(e.pos[0] * 100) / 100, 0, Math.round(e.pos[2] * 100) / 100],
-        yaw: Math.round(e.yaw * 1000) / 1000, status: e.status, seat: e.seat, emote: e.emote, beacon: !!e.beacon });
+        yaw: Math.round(e.yaw * 1000) / 1000, status: e.status, seat: e.seat, emote: e.emote, attire: e.attire || 'casual', beacon: !!e.beacon });
     }
     return { t: Date.now(), entities: ents, frozen: this.frozen };
   }
